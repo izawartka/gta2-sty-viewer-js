@@ -1,0 +1,108 @@
+canvas {
+    image-rendering: pixelated;
+}
+
+body {
+    background-color: black;
+    color: white;
+    font-family: monospace;
+}
+
+a {
+    color: white;
+}
+
+input[type="file"]::-webkit-file-upload-button,
+select,
+button,
+textarea,
+input[type="text"] {
+    background-color: black;
+    border: 2px solid white;
+    color: white;
+    padding: 3px 6px;
+    margin-bottom: 4px;
+    cursor: pointer;
+}
+
+textarea {
+    resize: none;
+    width: 500px;
+    height: 200px;
+}
+
+button:hover {
+    background-color: #333;
+}
+
+.tabs > button {
+    margin-bottom: -2px;
+    border-bottom: none;
+}
+
+.tabs > button.activeTabBtn {
+    margin-bottom: -2px;
+    padding-bottom: 5px;
+}
+
+.tab {
+    min-width: 200px;
+    border: 2px solid white;
+    padding: 8px;
+    display: none;
+}
+
+.activeTab {
+    display: block;
+}
+
+.scrollCont {
+    overflow: auto;
+}
+
+h2 {
+    margin-block-start: 0;
+    margin-block-end: 0;
+}
+
+fieldset {
+    min-inline-size: auto;
+}
+
+.hiddentable td {
+    vertical-align: top;
+    padding: 4px;
+}
+
+#seltilecanv,
+#selspritecanv,
+#selcarcanv {    
+    height: 256px;
+    width: 256px;
+    object-fit: contain;
+}
+
+input[type='text'],
+input[type='number'] {
+    appearance: none;
+    border: none;
+    padding: 0;
+    background: none;
+    margin: 0;
+    color: white;
+    border-bottom: 1px dashed white;
+    width: 50px;
+    font-family: monospace;
+    margin-block-end: -1px;
+}
+
+#spritescanv,
+#tilescanv,
+#carscanv {
+    padding-bottom: 8px;
+}
+
+span.link {
+    text-decoration: underline;
+    cursor: pointer;
+}

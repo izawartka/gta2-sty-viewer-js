@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="author" content="maseuko">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="js/main.js" type="module" defer></script>
+    <link rel="stylesheet" href="style.css">
+    <title>maseuko - STY Viewer</title>
+</head>
+<body>
+    <div class="tabs">
+        <button id="tab_file_btn">File</button>
+        <button id="tab_tiles_btn">Tiles</button>
+        <button id="tab_sprites_btn">Sprites</button>
+        <button id="tab_vehicles_btn">Vehicles</button>
+        <button id="tab_palettes_btn">Palettes</button>
+    </div>
+    <div id="tab_file" class="tab">
+        <h2>Javascript STY Viewer for GTA2 (BETA)</h2><br>
+        <label for="file">STY File: </label>
+        <input type="file" name="file" id="file">
+        <button id="fileapply">OK</button><br>
+        <span id="filestatus"></span>
+    </div>
+    <div id="tab_tiles" class="tab">
+        <fieldset>
+            <legend>All tiles</legend>
+            <div class="scrollCont">
+                <canvas id="tilescanv"></canvas>
+            </div><br>
+            <span id="tilesmmove"></span><br>
+        </fieldset><br>
+        <fieldset>
+            <legend>Selected tile</legend>
+            <table class='hiddentable'>
+                <tr>
+                    <td><canvas id="seltilecanv"></canvas></td>
+                    <td><div id="seltileinfo"></div></td>
+                </tr>
+            </table>
+        </fieldset>
+    </div>
+    <div id="tab_sprites" class="tab">
+        <fieldset>
+            <legend>All sprites</legend>
+            <div class="scrollCont" id="spritesscroll">
+                <canvas id="spritescanv"></canvas>
+            </div><br>
+            <span id="spritesmove"></span><br>
+            <label for="gotosprite">Go to sprite: </label>
+            <input type="number" id="gotosprite"><br>
+        </fieldset>
+        <fieldset>
+            <legend>Selected sprite</legend>
+            <table class='hiddentable'>
+                <tr>
+                    <td><canvas id="selspritecanv"></canvas></td>
+                    <td><div id="selspriteinfo"></div></td>
+                </tr>
+            </table>
+        </fieldset>
+
+    </div>
+    <div id="tab_palettes" class="tab">
+        <div class="scrollCont">
+            <canvas id="ppalscanv"></canvas>
+        </div><br>
+        
+    </div>
+    <div id="tab_vehicles" class="tab">
+        <fieldset>
+            <legend>All cars</legend>
+            <div class="scrollCont" id="carsscroll">
+                <canvas id="carscanv"></canvas>
+            </div><br>
+            <span id="carsmove"></span><br>
+        </fieldset>
+        <fieldset>
+            <legend>Selected car</legend>
+            <table class='hiddentable'>
+                <tr>
+                    <td><canvas id="selcarcanv"></canvas></td>
+                    <td><div id="selcarinfo"></div></td>
+                    <td><div id="selcarflagsinfo"></div></td>
+                </tr>
+            </table>
+        </fieldset>
+    </div>
+</body>
+</html>
