@@ -9,6 +9,7 @@ export class SpritesPage {
         let spriteIndex = this.sty.getSpriteIndex(spriteID);
         let spritePos = this.sty.getSpritePixelPos(spriteIndex.ptr);
         this.renderer.renderSprite(this.elements.selspritecanv, spriteID);
+        let spriteRelID = spriteID - this.sty.getSpriteBase(this.sty.getSpriteType(spriteID));
 
         let infoHTML = `
             <b>Sprite ID:</b> ${spriteID}<br>
@@ -20,7 +21,8 @@ export class SpritesPage {
             <b>Height:</b> ${spriteIndex.size[1]} px<br>
             <b>Virtual palette:</b> ${this.sty.getVPaletteID('sprite', spriteID)}<br>
             <b>Physical palette:</b> <input type="number" id="selspriteremap" value="${this.sty.getPPaletteID('sprite', spriteID)}"><br>
-            <b>Type:</b> ${this.sty.getSpriteType(spriteID)}<br>`;
+            <b>Type / Base:</b> ${this.sty.getSpriteType(spriteID)}<br>
+            <b><abbr title="id relative to object\'s base">Relative ID</abbr>:</b> ${spriteRelID}<br>`;
             
 
         this.elements.selspriteinfo.innerHTML = infoHTML;
@@ -45,8 +47,18 @@ export class SpritesPage {
         this.elements.spritesscroll.scroll(spriteX, 0);
     }
 
+    renderBasesList() {
+        let html = '';
+        let bases = this.sty.getAllSpriteBases();
+        Object.keys(bases).forEach(baseName=>{
+            html += `<div class="bordered"><b>${baseName}</b>: ${bases[baseName]}</div>`;
+        });
+        this.elements.spritebases.innerHTML = html;
+    }
+
     render() {
         let spritesCanv = this.elements.spritescanv;
+        this.renderBasesList();
         this.renderer.renderSpritesList(spritesCanv);
         spritesCanv.addEventListener('mousemove', e=>{
             let spriteID = this.renderer.getPointedSpriteID(spritesCanv, e);
