@@ -106,3 +106,23 @@ span.link {
     text-decoration: underline;
     cursor: pointer;
 }
+
+.pointer {
+    cursor: pointer;
+}
+
+.horizontal {
+    display: flex;
+    flex-direction: row;
+}
+
+.horizontal > * {
+    margin: 4px;
+}
+
+.bordered {
+    border: 1px solid white;    
+    margin-right: 4px;
+    padding-block: 2px;
+    padding-inline: 4px;
+}

@@ -177,6 +177,7 @@ export class DataChunk {
     readAsCARI() {
         this.carsInfo = [];
         let b = 0;
+        let lastSpriteID = -1;
         while(b < this.data.byteLength) {
             let remapsCount = new Uint8Array(this.data, b+4, 1)[0];
             let doorsCount = new Uint8Array(this.data, b+14+remapsCount, 1)[0];
@@ -222,6 +223,8 @@ export class DataChunk {
                 });
             }
 
+            if(carInfo.sprite) lastSpriteID++;
+            carInfo.spriteID = lastSpriteID;
             this.carsInfo.push(carInfo);
             b+=dataSize;
         }

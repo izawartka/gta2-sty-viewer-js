@@ -7,6 +7,8 @@ export class STY {
         this.header = String.fromCharCode.apply(String, new Uint8Array(binaryData, 0, 4));
         this.fileVersion = new Uint16Array(binaryData, 4, 1)[0];
 
+        if(!this.isFileCorrect()) return;
+
         let i = 6;
         while(i < binaryData.byteLength) {
             
@@ -17,6 +19,18 @@ export class STY {
             this.data[name] = new DataChunk(name, chunk);
             i+=size+8;
         }
+    }
+
+    isFileCorrect() {
+        if(this.header != 'GBST') {
+            console.warn(`Incorrect STY header: ${this.header}`);
+            return false;
+        }
+        if(this.fileVersion != 700) {
+            console.warn(`Incorrect STY version: ${this.fileVersion}`);
+            return false;
+        }
+        return true;
     }
 
     getVPaletteID(baseName, objID) {
@@ -75,7 +89,7 @@ export class STY {
     }
 
     getSpriteIndex(id) {
-        return this.data['SPRX'].spriteIndexes[id];
+        return JSON.parse(JSON.stringify(this.data['SPRX'].spriteIndexes[id]));
     }
 
     getSpritePixelPos(ptr) {
@@ -140,6 +154,10 @@ export class STY {
         return this.data['SPRB'].spriteBases[type];
     }
 
+    getAllSpriteBases() {
+        return this.data['SPRB'].spriteBases;
+    }
+
     getAllCarsInfo() {
         return this.data['CARI'].carsInfo;
     }
@@ -149,14 +167,12 @@ export class STY {
     }
 
     getCarSpriteID(carID) {
-        let lastSpriteID = this.data['SPRB'].spriteBases['car']-1;
-        let carsInfo = this.data['CARI'].carsInfo;
-        for(let i = 0; i < carsInfo.length; i++) {
-            if(carsInfo[i].sprite) {
-                lastSpriteID++;
-            }
-            if(i == carID) return lastSpriteID;
-        }
-            
+        let spriteID = this.data['CARI'].carsInfo[carID].spriteID;
+        let spriteBase = this.data['SPRB'].spriteBases['car'];
+        return spriteID + spriteBase;
+    }
+
+    getCarRecycled(carID) {
+        return this.data['RECY'].recyclingInfo.includes(carID);
     }
 }

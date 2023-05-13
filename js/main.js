@@ -5,28 +5,7 @@ import { TilesPage } from './tilespage.js';
 import { SpritesPage } from './spritespage.js';
 import { PPalPage } from './ppalpage.js';
 import { CarsPage } from './carspage.js';
-
-const elementsNames = [
-    'file',
-    'fileapply',
-    'filestatus',
-    'tilescanv',
-    'ppalscanv',
-    'spritescanv',
-    'tilesmmove',
-    'seltilecanv',
-    'seltileinfo',
-    'selspritecanv',
-    'selspriteinfo',
-    'spritesmove',
-    'gotosprite',
-    'spritesscroll',
-    'carscanv',
-    'carsmove',
-    'selcarcanv',
-    'selcarinfo',
-    'selcarflagsinfo',
-];
+import { elementsNames } from './constants.js';
 
 let elements = {};
 
@@ -51,44 +30,79 @@ class Main {
         ]
         this.tabs = new Tabs(tabNames);
 
+        elements.file.addEventListener('click', (event) => {
+            elements.filesrc_up.checked = true;
+        });
+
+        elements.filesrc_ex.addEventListener('click', (event) => {
+            elements.file.value = '';
+        });
+
         elements.fileapply.addEventListener('click', (event) => {
-            this.elements.filestatus.innerHTML = 'Reading...';
-            this.readSTY(elements.file.files[0])
-                .then(()=>{
-                    this.render()
-                });
+            this.onFileApply();
         });
     }
 
-    readSTY(file) {
+    log(msg) {
+        this.elements.filestatus.innerHTML = msg;
+        console.log(msg);
+    }
+
+    onFileApply() {
+        this.log('Uploading...');
+        this.getFileData()
+            .then((data)=>{
+                this.log('Reading...');
+                this.sty = new STY(data);
+                if(!this.sty.isFileCorrect()) {
+                    this.log('Error while reading: Incorrect file');
+                    return;
+                }
+                this.log('Rendering...');
+                this.render()
+                    .then(()=>{
+                        this.log('Done!');
+                        console.log(this);
+                    });
+            }, (error)=>{
+                this.log('Error while uploading: ' + error);
+            });
+    }
+
+    getFileData() {
         return new Promise((resolve, reject) => {
-            var reader = new FileReader();
+            if(elements.filesrc_ex.checked) {
+                fetch('./bill.sty')
+                    .then(response => response.arrayBuffer())
+                    .then(buffer => {
+                        resolve(buffer);
+                    });
+            } else {
+                let file = elements.file.files[0];
+                if(!file) reject('No file selected');
+                let reader = new FileReader();
 
-            reader.onload = () => 
-            {
-                this.sty = new STY(reader.result)
-                resolve();
-            };
-
-            reader.readAsArrayBuffer(file);
+                reader.onload = () => { resolve(reader.result) };
+                reader.onerror = () => { reject(reader.error) };
+                reader.readAsArrayBuffer(file);
+            }
         });
     }
 
     render() {
-        this.elements.filestatus.innerHTML = 'Rendering...';
-        this.renderer = new Renderer(this.sty);
+        return new Promise((resolve, reject) => {
+            this.renderer = new Renderer(this.sty);
 
-        this.tilesPage = new TilesPage(this.elements, this.sty, this.renderer);
-        this.spritesPage = new SpritesPage(this.elements, this.sty, this.renderer);
-        this.carsPage = new CarsPage(this.elements, this.sty, this.renderer, this.tabs);
-        this.carsPage.addSpritesPageReference((id) => {
-            this.tabs.showTab('sprites');
-            this.spritesPage.goTo(id);
+            this.tilesPage = new TilesPage(this.elements, this.sty, this.renderer);
+            this.spritesPage = new SpritesPage(this.elements, this.sty, this.renderer);
+            this.carsPage = new CarsPage(this.elements, this.sty, this.renderer, this.tabs);
+            this.carsPage.addSpritesPageReference((id) => {
+                this.tabs.showTab('sprites');
+                this.spritesPage.goTo(id);
+            });
+            this.ppalPage = new PPalPage(this.elements, this.sty, this.renderer);
+            resolve();    
         });
-        this.ppalPage = new PPalPage(this.elements, this.sty, this.renderer);
-        
-        this.elements.filestatus.innerHTML = 'Done!';
-        console.log(this);
     }
 }
 

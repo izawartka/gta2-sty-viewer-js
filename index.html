@@ -19,8 +19,12 @@
     </div>
     <div id="tab_file" class="tab">
         <h2>Javascript STY Viewer for GTA2 (BETA)</h2><br>
-        <label for="file">STY File: </label>
-        <input type="file" name="file" id="file">
+        STY File:<br>
+        <input type="radio" id="filesrc_ex" name="filesrc" value="ex" checked>
+        <label for="filesrc_ex">Example (bil.sty)</label><br>
+        <input type="radio" id="filesrc_up" name="filesrc" value="up">
+        <label for="filesrc_up">Upload file</label>
+        <input type="file" name="file" id="file"><br><br>
         <button id="fileapply">OK</button><br>
         <span id="filestatus"></span>
     </div>
@@ -34,12 +38,10 @@
         </fieldset><br>
         <fieldset>
             <legend>Selected tile</legend>
-            <table class='hiddentable'>
-                <tr>
-                    <td><canvas id="seltilecanv"></canvas></td>
-                    <td><div id="seltileinfo"></div></td>
-                </tr>
-            </table>
+            <div class="horizontal">
+                <canvas id="seltilecanv"></canvas>
+                <div id="seltileinfo"></div>
+            </div>
         </fieldset>
     </div>
     <div id="tab_sprites" class="tab">
@@ -51,22 +53,34 @@
             <span id="spritesmove"></span><br>
             <label for="gotosprite">Go to sprite: </label>
             <input type="number" id="gotosprite"><br>
-        </fieldset>
+        </fieldset><br>
         <fieldset>
             <legend>Selected sprite</legend>
-            <table class='hiddentable'>
-                <tr>
-                    <td><canvas id="selspritecanv"></canvas></td>
-                    <td><div id="selspriteinfo"></div></td>
-                </tr>
-            </table>
+            <div class="horizontal">
+                <canvas id="selspritecanv"></canvas>
+                <div id="selspriteinfo"></div>
+            </div>
+        </fieldset><br>
+        <fieldset>
+            <legend>Sprite bases</legend>
+            <div class="scrollCont horizontal" id="spritebases">
+                
+            </div>
         </fieldset>
 
     </div>
     <div id="tab_palettes" class="tab">
-        <div class="scrollCont">
-            <canvas id="ppalscanv"></canvas>
-        </div><br>
+        <fieldset>
+            <legend>All physical palettes</legend>
+            <div class="scrollCont">
+                <canvas id="ppalscanv"></canvas>
+            </div><br>
+            <span id="ppalsmove"></span><br>
+        </fieldset><br>
+        <fieldset>
+            <legend>Selected palette</legend>
+            xx
+        </fieldset>
         
     </div>
     <div id="tab_vehicles" class="tab">
@@ -76,15 +90,13 @@
                 <canvas id="carscanv"></canvas>
             </div><br>
             <span id="carsmove"></span><br>
-        </fieldset>
+        </fieldset><br>
         <fieldset>
             <legend>Selected car</legend>
-            <table class='hiddentable'>
-                <tr>
-                    <td><canvas id="selcarcanv"></canvas></td>
-                    <td><div id="selcarinfo"></div></td>
-                    <td><div id="selcarflagsinfo"></div></td>
-                </tr>
+            <div class="horizontal">
+                <canvas id="selcarcanv"></canvas>
+                <div id="selcarinfo"></div>
+                <div id="selcarflagsinfo"></div>
             </table>
         </fieldset>
     </div>

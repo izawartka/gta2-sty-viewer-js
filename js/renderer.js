@@ -1,3 +1,5 @@
+import { carTurrets } from "./constants.js";
+
 export class Renderer {
     constructor(sty) {
         this.sty = sty;
@@ -79,6 +81,10 @@ export class Renderer {
 
     getSprite(spriteID, remap = -1) {
         let spriteIndex = this.sty.getSpriteIndex(spriteID);
+        if(!spriteIndex) {
+            console.error(`Sprite ${spriteID} not found!`);
+            return null;
+        }
         let width = spriteIndex.size[0];
         let height = spriteIndex.size[1];
         let spritePos = this.sty.getSpritePixelPos(spriteIndex.ptr);
@@ -105,7 +111,33 @@ export class Renderer {
         };
     }
 
-    renderSprite(canvas, spriteID, remap = -1) {
+    combineLayers(layers, width, height) {
+        const outImgData = new ImageData(width, height);
+
+        for(let l = 0; l < layers.length; l++) {
+            let layer = layers[l];
+            for(let p = 0; p < layer.imgData.data.length/4; p++) {
+                let x = p % layer.width;
+                let y = ~~(p/layer.width);
+                let outX = layer.x + (x * (layer.flipX ? -1 : 1)) + (layer.flipX ? layer.width-1 : 0);
+                let outY = layer.y + (y * (layer.flipY ? -1 : 1)) + (layer.flipY ? layer.height-1 : 0);
+                let outP = outY*width+outX;
+
+                if(outX < 0 || outX >= width || outY < 0 || outY >= height) continue;
+                let data = layer.imgData.data;
+                if(data[p*4+3] == 0) continue;
+                if(data[p*4+0] + data[p*4+1] + data[p*4+2] == 0) continue;
+                outImgData.data[outP*4+0] = layer.imgData.data[p*4+0];
+                outImgData.data[outP*4+1] = layer.imgData.data[p*4+1];
+                outImgData.data[outP*4+2] = layer.imgData.data[p*4+2];
+                outImgData.data[outP*4+3] = layer.imgData.data[p*4+3];
+            }
+        }
+
+        return outImgData;
+    }
+
+    renderSprite(canvas, spriteID, remap = -1, x = 0, y = 0) {
         const spriteIndex = this.sty.getSpriteIndex(spriteID);
         canvas.width = spriteIndex.size[0];
         canvas.height = spriteIndex.size[1];
@@ -113,7 +145,7 @@ export class Renderer {
         const ctx = canvas.getContext('2d');
         const spriteData = this.getSprite(spriteID, remap);
 
-        ctx.putImageData(spriteData.imgData, 0, 0);
+        ctx.putImageData(spriteData.imgData, x, y);
     }
 
     renderSpritesList(canvas) {
@@ -150,25 +182,83 @@ export class Renderer {
         let currentX = 0;
         let lastSpriteData;
         let lastSpriteID = this.sty.getSpriteBase('car')-1;
-        carsInfo.forEach(carInfo => {
-            if(carInfo.sprite) {
+
+        for(let i = 0; i < carsInfo.length; i++) {
+            if(carsInfo[i].sprite) {
                 lastSpriteID++;
-                lastSpriteData = this.getSprite(lastSpriteID);
+                lastSpriteData = this.getCarSprite(lastSpriteID, -1, true, lastSpriteID, carsInfo[i].model);
             }
 
             let y = 0;
-            let x = currentX - (lastSpriteData.index.size[0] - carInfo.width)/2
+            let x = currentX - (lastSpriteData.index.size[0] - carsInfo[i].width)/2
             ctx.putImageData(lastSpriteData.imgData, x, y);
-            currentX += carInfo.width + 16;
-        })        
+            currentX += carsInfo[i].width + 16;
+        }
+    }
+
+    renderCarSel(canvas, carID, remap = -1, showTurret = false, showHitbox = false) {
+        let carSprite = this.getCarSprite(carID, remap, showTurret);
+    
+        canvas.width = carSprite.index.size[0];
+        canvas.height = carSprite.index.size[1];
+        let ctx = canvas.getContext('2d');
+
+        ctx.putImageData(carSprite.imgData, 0, 0);
+        
+        if(showHitbox) {
+            this.renderCarHitbox(canvas, carID);
+        }
+    }
+
+    getCarSprite(carID, remap = -1, showTurret = false, customSpriteID = -1, customCarModel = -1) {
+        let carModel = (customCarModel+1) ? customCarModel : this.sty.getCarInfo(carID).model;
+        let carSpriteID = (customSpriteID+1) ? customSpriteID : this.sty.getCarSpriteID(carID);
+        let carSprite = this.getSprite(carSpriteID, remap);
+        
+        if(!showTurret) return carSprite;
+        let turretInfo = carTurrets[carModel];
+        if(!turretInfo) return carSprite;
+        
+        let turretSpriteID = this.sty.getSpriteBase('code_obj') + turretInfo.objID;
+        let turretSprite = this.getSprite(turretSpriteID, -1, true);
+        if(!turretSprite) return imgData;
+
+        let turretX = ~~(carSprite.index.size[0]/2 + turretInfo.xOff - turretSprite.index.size[0]/2);
+        let turretY = ~~(carSprite.index.size[1]/2 + turretInfo.yOff - turretSprite.index.size[1]/2);
+
+        let carHeight = carSprite.index.size[1];
+        if(turretY+turretSprite.index.size[1] > carHeight) carHeight = turretY+turretSprite.index.size[1];
+
+        let layers = [
+            {
+                imgData: carSprite.imgData, 
+                x: 0, y: 0, 
+                width: carSprite.index.size[0], height: carSprite.index.size[1]
+            },
+            {
+                imgData: turretSprite.imgData,
+                x: turretX, y: turretY, 
+                width: turretSprite.index.size[0], height: turretSprite.index.size[1], 
+                flipX: turretInfo.flip, flipY: turretInfo.flip
+            }
+        ];
+
+        // overwrite
+        carSprite.imgData = this.combineLayers(layers, carSprite.index.size[0], carHeight);
+        carSprite.index.size[1] = carHeight;
+
+        return carSprite;
     }
 
     renderCarHitbox(canvas, carID) {
-        let ctx = canvas.getContext('2d');
         const carInfo = this.sty.getCarInfo(carID);
+        const carSpriteID = this.sty.getCarSpriteID(carID);
+        const carSpriteIndex = this.sty.getSpriteIndex(carSpriteID);
+
+        let ctx = canvas.getContext('2d');
         ctx.lineWidth = 1;
-        let cx = ~~(canvas.width/2);
-        let cy = ~~(canvas.height/2);
+        let cx = ~~(carSpriteIndex.size[0]/2);
+        let cy = ~~(carSpriteIndex.size[1]/2);
         let corx = ~~(cx-carInfo.width/2)+.5;
         let cory = ~~(cy-carInfo.height/2)+.5;
 
@@ -192,11 +282,4 @@ export class Renderer {
             if(sumx > mx) return i;
         }
     }
-
-    // renderCarTurret(canvas, carID) {
-    //     let ctx = canvas.getContext('2d');
-    //     let cx = ~~(canvas.width/2);
-    //     let cy = ~~(canvas.height/2);
-
-    // }
 }
