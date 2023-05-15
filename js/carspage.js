@@ -32,7 +32,7 @@ export class CarsPage {
             <b>Model:</b> ${carInfo.model}<br>
             <b>Codename:</b> ${carIntNames[carInfo.model]}<br>
             <b>Capacity:</b> ${carInfo.passengers} + driver<br>
-            <b><abbr title="does the car appear on roads in singleplayer">Recycled</abbr>:</b> ${this.sty.getCarRecycled(carID) ? 'yes' : 'no'}<br>
+            <b><abbr title="does the car appear on roads in singleplayer">Recycled</abbr>:</b> ${this.sty.getCarRecycled(carInfo.model) ? 'yes' : 'no'}<br>
             <b><abbr title="rating of the car used to decide how often it appears on roads">Rating</abbr>:</b> ${carRatingNames[carInfo.rating]}<br>
             <b>Sprite ID:</b> <span class="link" id="selcarsprite">car/${spriteID}</span><br>
             <b>Turret sprite ID:</b> ${turretText}<br>

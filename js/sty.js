@@ -178,8 +178,8 @@ export class STY {
         return spriteID + spriteBase;
     }
 
-    getCarRecycled(carID) {
-        return this.data['RECY'].recyclingInfo.includes(carID);
+    getCarRecycled(carModel) {
+        return this.data['RECY'].recyclingInfo.includes(carModel);
     }
 
     getPPalUsage(paletteID) {
