@@ -195,6 +195,7 @@ export class Renderer {
 
         for(let l = 0; l < layers.length; l++) {
             let layer = layers[l];
+            
             for(let p = 0; p < layer.imgData.data.length/4; p++) {
                 let x = p % layer.width;
                 let y = ~~(p/layer.width);
@@ -315,7 +316,7 @@ export class Renderer {
             });
         }
         
-        if(showTurret) () => {
+        if(showTurret) (() => {
             let turretInfo = carTurrets[carModel];
             if(!turretInfo) return;
 
@@ -334,7 +335,7 @@ export class Renderer {
                 width: turretSprite.index.size[0], height: turretSprite.index.size[1], 
                 flipX: turretInfo.flip, flipY: turretInfo.flip
             });
-        }
+        })();
 
         if(layers.length == 1) return carSprite;
 
@@ -349,6 +350,7 @@ export class Renderer {
         let carSpriteID = this.sty.getCarSpriteID(carID);
         let carDeltas = this.sty.getSpriteDeltas(carSpriteID);
         let carSpriteSize = this.sty.getSpriteIndex(carSpriteID).size;
+        let carInfo = this.sty.getCarInfo(carID);
 
         canvas.width = carSpriteSize[0] * carDeltas.length;
         canvas.height = carSpriteSize[1];

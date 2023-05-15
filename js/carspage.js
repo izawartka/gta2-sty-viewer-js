@@ -47,7 +47,7 @@ export class CarsPage {
             <input type="checkbox" id="selcarhitbox" ${this.showCarHitbox?'checked':''}>
                 <label for="selcarhitbox">Show hitbox</label><br>
             <input type="checkbox" id="selcarturret" ${this.showCarTurret?'checked':''}>
-                <label for="selcarhitbox">Show turret</label>
+                <label for="selcarturret">Show turret</label>
             `;
         
         this.elements.selcarinfo.innerHTML = infoHTML;

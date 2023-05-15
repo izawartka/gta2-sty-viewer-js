@@ -227,17 +227,17 @@ export class STY {
         let b = 0;
         let i = this.data['DELS'].deltaPtrs[index.ptr];
         while(b < index.totalSize) {
-            let delta = this.data['DELS'].deltas[i];
-            deltas[currentDelta].push(delta);
-            b+=delta.size+3;
-            db+=delta.size+3;
-            i++;
-
             if(db >= index.deltaSizes[currentDelta]) {
                 currentDelta++;
                 deltas.push([]);
                 db = 0;
             }
+            
+            let delta = this.data['DELS'].deltas[i];
+            deltas[currentDelta].push(delta);
+            b+=delta.size+3;
+            db+=delta.size+3;
+            i++;
         }
 
         return deltas;
