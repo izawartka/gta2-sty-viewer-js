@@ -15,6 +15,8 @@ export class DataChunk {
             'FONB': this.readAsFONB,
             'SPEC': this.readAsSPEC,
             'CARI': this.readAsCARI,
+            'DELS': this.readAsDELS,
+            'DELX': this.readAsDELX,
         };
 
         if(!Object.keys(types).includes(name)) {
@@ -62,6 +64,8 @@ export class DataChunk {
             this.paletteBases[basesNames[i]] = sum;
             sum += basesArray[i];
         }
+
+        this.totalLength = sum;
     }
 
     readAsPPAL() {
@@ -93,7 +97,7 @@ export class DataChunk {
             let index = {
                 ptr: new Uint32Array(indexData, 0)[0],
                 size: new Uint8Array(indexData, 4, 2),
-                pad: new Uint16Array(indexData, 6)[0]
+                //pad: new Uint16Array(indexData, 6)[0]
             }
 
             this.spriteIndexes[i] = index;
@@ -127,6 +131,8 @@ export class DataChunk {
             this.spriteBases[basesNames[i]] = sum;
             sum += basesArray[i];
         }
+        
+        this.totalLength = sum;
     }
 
     readAsRECY() {
@@ -158,6 +164,8 @@ export class DataChunk {
             this.fontBases[id] = sum;
             sum += base;
         })
+
+        this.totalLength = sum;
     }
 
     readAsSPEC() {
@@ -227,6 +235,50 @@ export class DataChunk {
             carInfo.spriteID = lastSpriteID;
             this.carsInfo.push(carInfo);
             b+=dataSize;
+        }
+    }
+
+    readAsDELS() {
+        this.deltas = [];
+        this.deltaPtrs = {};
+
+        let i = 0;
+        let b = 0;
+        while(b < this.data.byteLength) {
+            let offset = new Uint16Array(this.data.slice(b, b+2), 0, 1)[0];
+            let size = new Uint8Array(this.data, b+2, 1)[0];
+            let deltaData = new Uint8Array(this.data, b+3, size);
+            this.deltas.push({
+                offset,
+                size,
+                data: Array.from(deltaData)
+            });
+            this.deltaPtrs[b] = i;
+            b+=3+size;
+            i++;
+        }
+    }
+
+    readAsDELX() {
+        this.deltaIndexes = [];
+
+        let currentPtr = 0;
+        let b = 0;
+        while(b < this.data.byteLength) {
+            let spriteID = new Uint16Array(this.data, b, 1)[0];
+            let count = new Uint8Array(this.data, b+2, 1)[0];
+            let deltaSizes = Array.from(new Uint16Array(this.data.slice(b+4, b+4+count*2), 0, count));
+            let totalSize = deltaSizes.reduce((a, b) => a+b, 0);
+
+            this.deltaIndexes.push({
+                spriteID,
+                ptr: currentPtr,
+                deltaSizes: deltaSizes,
+                totalSize,
+            });
+
+            currentPtr += totalSize;
+            b+=4+count*2;
         }
     }
 }

@@ -13,7 +13,7 @@ export class TilesPage {
             <b>Tile ID:</b> ${tileID}<br>
             <b>Page ID:</b> ${pageID}<br>
             <b>Tile on page ID:</b> ${tileIDinPage}<br>
-            <b>Virtual palette:</b> ${this.sty.getVPaletteID('tile', tileID)}<br>
+            <b>Virtual palette:</b> tile/${tileID} (${this.sty.getVPaletteID('tile', tileID)})<br>
             <b>Physical palette:</b> ${this.sty.getPPaletteID('tile', tileID)}<br>
             <b>Material:</b> ${this.sty.getMaterialName(tileID)}<br>`;
 
@@ -25,7 +25,7 @@ export class TilesPage {
         this.renderer.renderTilesList(tilesCanv);
         tilesCanv.addEventListener('mousemove', e=> {
             let tileID = this.renderer.getPointedTileID(tilesCanv, e);
-            this.elements.tilesmmove.innerHTML = `ID: ${tileID} Page: ${~~(tileID/16)}`;
+            this.elements.tilesmove.innerHTML = `<b>ID:</b> ${tileID} / <b>Page:</b> ${~~(tileID/16)}`;
         })
         tilesCanv.addEventListener('click', e=> {
             let tileID = this.renderer.getPointedTileID(tilesCanv, e);

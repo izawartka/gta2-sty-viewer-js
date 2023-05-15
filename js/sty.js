@@ -89,7 +89,9 @@ export class STY {
     }
 
     getSpriteIndex(id) {
-        return JSON.parse(JSON.stringify(this.data['SPRX'].spriteIndexes[id]));
+        let index = this.data['SPRX'].spriteIndexes[id];
+        if(!index) console.warn(`Incorrect sprite ID: ${id}`);
+        return JSON.parse(JSON.stringify(index));
     }
 
     getSpritePixelPos(ptr) {
@@ -158,6 +160,10 @@ export class STY {
         return this.data['SPRB'].spriteBases;
     }
 
+    getAllPalBases() {
+        return this.data['PALB'].paletteBases;
+    }
+
     getAllCarsInfo() {
         return this.data['CARI'].carsInfo;
     }
@@ -174,5 +180,66 @@ export class STY {
 
     getCarRecycled(carID) {
         return this.data['RECY'].recyclingInfo.includes(carID);
+    }
+
+    getPPalUsage(paletteID) {
+        let usage = {};
+        let palb = Object.entries(this.data['PALB'].paletteBases);
+        let vpalL = this.data['PALB'].totalLength;
+
+        this.data['PALX'].virtualPalettes.forEach((ppal, vpal) => {
+            if(ppal != paletteID) return;
+            if(vpal >= vpalL) return;
+
+            for(let i = 1; i <= palb.length; i++) {
+                if(palb[i] && vpal >= palb[i][1]) continue;
+
+                let baseName = palb[i-1][0];
+                if(!usage[baseName]) usage[baseName] = [];
+                usage[baseName].push(vpal - palb[i-1][1]);
+                break;
+            }
+        });
+        return usage;
+    }
+
+    getAllFontBases() {
+        return this.data['FONB'].fontBases;
+    }
+
+    getAllFontSizes() {
+        let fonb = this.data['FONB'].fontBases;
+        return fonb.map((base, i) => {
+            if(i == fonb.length-1) return this.data['FONB'].totalLength - base;
+            return fonb[i+1] - base;
+        });
+    }
+
+    // this code begs for refactoring
+    getSpriteDeltas(spriteID) {
+        let index = this.data['DELX'].deltaIndexes.filter(index => index.spriteID == spriteID)[0];
+        if(!index) return [];
+
+        let deltas = [[]];
+
+        let currentDelta = 0;
+        let db = 0;
+        let b = 0;
+        let i = this.data['DELS'].deltaPtrs[index.ptr];
+        while(b < index.totalSize) {
+            if(db >= index.deltaSizes[currentDelta]) {
+                currentDelta++;
+                deltas.push([]);
+                db = 0;
+            }
+            
+            let delta = this.data['DELS'].deltas[i];
+            deltas[currentDelta].push(delta);
+            b+=delta.size+3;
+            db+=delta.size+3;
+            i++;
+        }
+
+        return deltas;
     }
 }

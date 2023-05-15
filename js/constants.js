@@ -4,24 +4,39 @@ export const elementsNames = [
     'file',
     'fileapply',
     'filestatus',
+
     'tilescanv',
-    'ppalscanv',
-    'ppalsmove',
-    'spritescanv',
-    'tilesmmove',
+    'tilesmove',
     'seltilecanv',
     'seltileinfo',
+
+    'spritescanv',
     'selspritecanv',
     'selspriteinfo',
     'spritesmove',
     'gotosprite',
     'spritesscroll',
     'spritebases',
+
     'carscanv',
     'carsmove',
     'selcarcanv',
     'selcarinfo',
+    'selcarremaps',
     'selcarflagsinfo',
+    'cardeltascanv',
+    'cardeltasmode_o',
+    'cardeltasmode_d',
+
+    'ppalscanv',
+    'ppalsmove',
+    'selppalcanv',
+    'selppalmove',
+    'selppalinfo',
+    'palbases',
+
+    'fontslist',
+    'fontsmove',
 ];
 
 export const carIntNames = [
