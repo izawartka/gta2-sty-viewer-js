@@ -12,15 +12,16 @@ A web viewer for GTA2 graphics files (.sty) written from scratch in pure JS. Fea
 - Browsing cars
     - Info about their hitboxes, flags, capacity, etc.
     - Displaying special cars with their turrets (tank, firetruck, gunjeep)
+    - Repainting them 
+    - Showing their deltas (veriants with lights turned on, open doors etc.)
 - Browsing physical palettes
+    - Info about what sprites/tiles they are used by
+    - Info about specific colors
+- Info about palette bases
+- Fonts list
 
 ## To do
-- Easier car remapping
-- Car's available remaps list
-- Car's doors list
-- Deltas support
-- Opening car's doors, switching lights on, etc.
-- More info about physical palettes
+- Renderer refactor
 - Virtual palettes list maybe?
 - Editor maybe?
 - ...

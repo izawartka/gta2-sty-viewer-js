@@ -3,8 +3,9 @@ import { Renderer } from './renderer.js';
 import { Tabs } from './tabs.js';
 import { TilesPage } from './tilespage.js';
 import { SpritesPage } from './spritespage.js';
-import { PPalPage } from './ppalpage.js';
+import { PalPage } from './palpage.js';
 import { CarsPage } from './carspage.js';
+import { FontsPage } from './fontspage.js';
 import { elementsNames } from './constants.js';
 
 let elements = {};
@@ -20,15 +21,8 @@ class Main {
         this.elements = elements;
         this.sty;
         this.renderer;
-
-        const tabNames = [
-            'file',
-            'tiles',
-            'sprites',
-            'vehicles',
-            'palettes',
-        ]
-        this.tabs = new Tabs(tabNames);
+        this.busy = false;
+        this.tabs = new Tabs();
 
         elements.file.addEventListener('click', (event) => {
             elements.filesrc_up.checked = true;
@@ -49,6 +43,8 @@ class Main {
     }
 
     onFileApply() {
+        if(this.busy) return;
+        this.busy = true;
         this.log('Uploading...');
         this.getFileData()
             .then((data)=>{
@@ -56,23 +52,26 @@ class Main {
                 this.sty = new STY(data);
                 if(!this.sty.isFileCorrect()) {
                     this.log('Error while reading: Incorrect file');
+                    this.busy = false;
                     return;
                 }
                 this.log('Rendering...');
                 this.render()
                     .then(()=>{
                         this.log('Done!');
+                        this.busy = false;
                         console.log(this);
                     });
             }, (error)=>{
                 this.log('Error while uploading: ' + error);
+                this.busy = false;
             });
     }
 
     getFileData() {
         return new Promise((resolve, reject) => {
             if(elements.filesrc_ex.checked) {
-                fetch('./bill.sty')
+                fetch('./bil.sty')
                     .then(response => response.arrayBuffer())
                     .then(buffer => {
                         resolve(buffer);
@@ -100,7 +99,8 @@ class Main {
                 this.tabs.showTab('sprites');
                 this.spritesPage.goTo(id);
             });
-            this.ppalPage = new PPalPage(this.elements, this.sty, this.renderer);
+            this.ppalPage = new PalPage(this.elements, this.sty, this.renderer);
+            this.fontsPage = new FontsPage(this.elements, this.sty, this.renderer);
             resolve();    
         });
     }

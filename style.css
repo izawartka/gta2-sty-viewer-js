@@ -107,6 +107,11 @@ span.link {
     cursor: pointer;
 }
 
+.remap {
+    margin-right: 16px;
+}
+
+.remap,
 .pointer {
     cursor: pointer;
 }
@@ -114,6 +119,7 @@ span.link {
 .horizontal {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
 }
 
 .horizontal > * {
@@ -125,4 +131,40 @@ span.link {
     margin-right: 4px;
     padding-block: 2px;
     padding-inline: 4px;
+}
+
+.remapsq {
+    display: inline-block;
+    width: 12px;
+    height: 12px;    
+    margin: 2px;
+    vertical-align: text-bottom;
+}
+
+.remapcl {
+    border: 1px solid white;
+    box-sizing: border-box;
+}
+
+.wrapedlist {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    height: 240px;
+    width: 128px;
+    align-content: flex-start;
+}
+
+#selppalcanv {
+    width: 100%;
+}
+
+.fontdescr {
+    margin-right: 8px;
+    min-width: max-content;
+}
+
+.fontinlist {
+    margin: 8px 0;
+    align-items: flex-end;
 }

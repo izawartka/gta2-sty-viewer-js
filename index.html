@@ -16,9 +16,11 @@
         <button id="tab_sprites_btn">Sprites</button>
         <button id="tab_vehicles_btn">Vehicles</button>
         <button id="tab_palettes_btn">Palettes</button>
+        <button id="tab_fonts_btn">Fonts</button>
     </div>
     <div id="tab_file" class="tab">
-        <h2>Javascript STY Viewer for GTA2 (BETA)</h2><br>
+        <h2>Javascript STY Viewer for GTA2 (BETA)</h2>
+        by masuo/izawartka<br><br>
         STY File:<br>
         <input type="radio" id="filesrc_ex" name="filesrc" value="ex" checked>
         <label for="filesrc_ex">Example (bil.sty)</label><br>
@@ -32,9 +34,9 @@
         <fieldset>
             <legend>All tiles</legend>
             <div class="scrollCont">
-                <canvas id="tilescanv"></canvas>
+                <canvas class="pointer" id="tilescanv"></canvas>
             </div><br>
-            <span id="tilesmmove"></span><br>
+            <span id="tilesmove">&nbsp;</span><br>
         </fieldset><br>
         <fieldset>
             <legend>Selected tile</legend>
@@ -48,9 +50,9 @@
         <fieldset>
             <legend>All sprites</legend>
             <div class="scrollCont" id="spritesscroll">
-                <canvas id="spritescanv"></canvas>
+                <canvas class="pointer" id="spritescanv"></canvas>
             </div><br>
-            <span id="spritesmove"></span><br>
+            <span id="spritesmove">&nbsp;</span><br>
             <label for="gotosprite">Go to sprite: </label>
             <input type="number" id="gotosprite"><br>
         </fieldset><br>
@@ -73,13 +75,24 @@
         <fieldset>
             <legend>All physical palettes</legend>
             <div class="scrollCont">
-                <canvas id="ppalscanv"></canvas>
+                <canvas class="pointer" id="ppalscanv"></canvas>
             </div><br>
-            <span id="ppalsmove"></span><br>
+            <span id="ppalsmove">&nbsp;</span><br>
         </fieldset><br>
         <fieldset>
             <legend>Selected palette</legend>
-            xx
+            <div id="selppalinfo"></div>
+        </fieldset><br>
+        <fieldset>
+            <legend>Get color</legend>
+            <canvas id="selppalcanv" height="1"></canvas><br><br>
+            <span id="selppalmove">&nbsp;</span><br>
+        </fieldset><br>
+        <fieldset>
+            <legend>Virtual palette bases</legend>
+            <div class="scrollCont horizontal" id="palbases">
+                
+            </div>
         </fieldset>
         
     </div>
@@ -87,9 +100,9 @@
         <fieldset>
             <legend>All cars</legend>
             <div class="scrollCont" id="carsscroll">
-                <canvas id="carscanv"></canvas>
+                <canvas class="pointer" id="carscanv"></canvas>
             </div><br>
-            <span id="carsmove"></span><br>
+            <span id="carsmove">&nbsp;</span><br>
         </fieldset><br>
         <fieldset>
             <legend>Selected car</legend>
@@ -97,7 +110,27 @@
                 <canvas id="selcarcanv"></canvas>
                 <div id="selcarinfo"></div>
                 <div id="selcarflagsinfo"></div>
+                <div id="selcarremaps"></div>
             </table>
+        </fieldset><br>
+        <fieldset>
+            <legend>Deltas</legend>
+            <input type="radio" name="cardeltasmode" id="cardeltasmode_o" value="o" checked>
+            <label for="cardeltasmode_o">Overlay</label>
+            <input type="radio" name="cardeltasmode" id="cardeltasmode_d" value="d">
+            <label for="cardeltasmode_d">Deltas only</label><br><br>
+            <div class="scrollCont">
+                <canvas id="cardeltascanv"></canvas>
+            </div><br>
+        </fieldset>
+    </div>
+    <div id="tab_fonts" class="tab">
+        <fieldset>
+            <legend>All fonts</legend>
+            <div class="scrollCont">
+                <div id="fontslist"></div>
+            </div><br>
+            <span id="fontsmove">&nbsp;</span><br>
         </fieldset>
     </div>
 </body>

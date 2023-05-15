@@ -1,25 +1,41 @@
 export class Tabs {
-    constructor(tabNames) {
-        this.tabNames = tabNames;
+    constructor() {
         this.tabButtons = {};
         this.tabElements = {};
+        this.mainTabName = '';
         //this.tabEvents = {};
         this.currentTabName = '';
 
-        this.tabNames.forEach(tabName => {
-            this.tabButtons[tabName] = document.getElementById(`tab_${tabName}_btn`);
-            this.tabElements[tabName] = document.getElementById(`tab_${tabName}`);
+        let detectedTabs = Array.from(document.getElementsByClassName('tab'));
+        detectedTabs.forEach(tabElement => {
+            if(!tabElement.id.startsWith('tab_')) {
+                console.warn(`Tab element has incorrect id: ${tabElement.id}, should start with 'tab_'`);
+                return;
+            }
+            let tabName = tabElement.id.substring(4);
+            let tabButton = document.getElementById(`tab_${tabName}_btn`);
+            if(!tabButton) {
+                console.warn(`Tab button not found: ${tabName}`);
+                return;
+            }
 
-            this.tabButtons[tabName].onclick = (e) => {
+            if(!this.mainTabName) this.mainTabName = tabName;
+            this.tabElements[tabName] = tabElement;
+            this.tabButtons[tabName] = tabButton;
+
+            tabButton.onclick = (e) => {
                 this.showTab(tabName);
             }
         });
 
-        this.showTab(this.tabNames[0]);
+        this.showTab(this.mainTabName);
     }
 
     showTab(tabName) {
-        if(!this.tabElements[tabName]) return;
+        if(!this.tabElements[tabName]) {
+            console.warn(`Tab not found: ${tabName}`);
+            return;
+        }
         if(this.currentTabName) {
             this.tabButtons[this.currentTabName].classList.remove('activeTabBtn');
             this.tabElements[this.currentTabName].classList.remove('activeTab');
@@ -28,17 +44,6 @@ export class Tabs {
         this.currentTabName = tabName;
 
         this.tabButtons[this.currentTabName].classList.add('activeTabBtn');
-        this.tabElements[this.currentTabName].classList.add('activeTab');
-        
-        // setTimeout(() => {
-        //     if(this.tabEvents[tabName]) {
-        //         this.tabEvents[tabName].call();
-        //     }
-        // }, 30);
-        
+        this.tabElements[this.currentTabName].classList.add('activeTab');        
     }
-
-    // addTabEvent(tabName, func) {
-    //     this.tabEvents[tabName] = func;
-    // }
 }
