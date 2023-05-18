@@ -45,6 +45,11 @@ button:hover {
     padding-bottom: 5px;
 }
 
+.lockedTabBtn {
+    color: gray;
+    cursor: not-allowed;
+}
+
 .tab {
     min-width: 200px;
     border: 2px solid white;

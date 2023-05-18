@@ -1,4 +1,4 @@
-import {carIntNames, carRatingNames, carFlagNames, carTurrets } from './constants.js';
+import {carIntNames, carRatingNames, carFlagNames, carDeltas, carTurrets } from './constants.js';
 
 export class CarsPage {
     constructor(elements, sty, renderer, tabs) {
@@ -129,9 +129,17 @@ export class CarsPage {
         let overlayMode = this.elements.cardeltasmode_o.checked;
     
         this.renderer.renderCarDeltas(deltasCanv, carID, this.selectedRemap, overlayMode);
+
+        let carSpriteID = this.sty.getCarSpriteID(carID);
+        let carSpriteWidth = this.sty.getSpriteIndex(carSpriteID).size[0];
+        deltasCanv.addEventListener('mousemove', e=> {
+            let deltaID = this.renderer.getPointedFromX(deltasCanv, e, carSpriteWidth);
+            this.elements.cardeltasmove.innerHTML = `<b>Delta ID:</b> ${deltaID} / <b>Typical use:</b> ${carDeltas[deltaID] || 'unknown'}`;
+        });
     }
 
     select(carID) {
+        this.elements.cardeltasmove.innerHTML = '';
         this.selectedCarID = carID;
         this.selectedRemap = -1;
         let carInfo = this.sty.getCarInfo(carID);

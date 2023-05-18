@@ -113,7 +113,7 @@ export class Renderer {
         ctx.strokeRect(xMarker*scale-.5, -.5, scale+1, canvas.height+1);
     };
 
-    getPointedPaletteID(canvas, e, scale = 4) {
+    getPointedFromX(canvas, e, scale = 4) {
         let rect = canvas.getBoundingClientRect();
         let curX = e.clientX - rect.left;
         let id = ~~((curX * canvas.width) / (rect.width * scale));
@@ -350,7 +350,6 @@ export class Renderer {
         let carSpriteID = this.sty.getCarSpriteID(carID);
         let carDeltas = this.sty.getSpriteDeltas(carSpriteID);
         let carSpriteSize = this.sty.getSpriteIndex(carSpriteID).size;
-        let carInfo = this.sty.getCarInfo(carID);
 
         canvas.width = carSpriteSize[0] * carDeltas.length;
         canvas.height = carSpriteSize[1];

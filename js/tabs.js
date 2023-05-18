@@ -1,9 +1,7 @@
 export class Tabs {
     constructor() {
-        this.tabButtons = {};
-        this.tabElements = {};
+        this.tabs = {};
         this.mainTabName = '';
-        //this.tabEvents = {};
         this.currentTabName = '';
 
         let detectedTabs = Array.from(document.getElementsByClassName('tab'));
@@ -20,8 +18,11 @@ export class Tabs {
             }
 
             if(!this.mainTabName) this.mainTabName = tabName;
-            this.tabElements[tabName] = tabElement;
-            this.tabButtons[tabName] = tabButton;
+            this.tabs[tabName] = {
+                element: tabElement,
+                button: tabButton,
+                locked: false,
+            };
 
             tabButton.onclick = (e) => {
                 this.showTab(tabName);
@@ -31,19 +32,42 @@ export class Tabs {
         this.showTab(this.mainTabName);
     }
 
-    showTab(tabName) {
-        if(!this.tabElements[tabName]) {
+    lockTab(tabName, lock = true) {
+        if(!this.tabs[tabName]) {
             console.warn(`Tab not found: ${tabName}`);
             return;
         }
+
+        this.tabs[tabName].locked = lock;
+
+        if(lock)
+            this.tabs[tabName].button.classList.add('lockedTabBtn');
+        else
+            this.tabs[tabName].button.classList.remove('lockedTabBtn');
+    }
+
+    lockAllTabs(lock = true) {
+        Object.keys(this.tabs).forEach(tabName => {
+            this.lockTab(tabName, lock);
+        });
+    }
+
+    showTab(tabName) {
+        if(!this.tabs[tabName]) {
+            console.warn(`Tab not found: ${tabName}`);
+            return;
+        }
+        if(this.tabs[tabName].locked) {
+            return;
+        }   
         if(this.currentTabName) {
-            this.tabButtons[this.currentTabName].classList.remove('activeTabBtn');
-            this.tabElements[this.currentTabName].classList.remove('activeTab');
+            this.tabs[this.currentTabName].button.classList.remove('activeTabBtn');
+            this.tabs[this.currentTabName].element.classList.remove('activeTab');
         }
         
         this.currentTabName = tabName;
 
-        this.tabButtons[this.currentTabName].classList.add('activeTabBtn');
-        this.tabElements[this.currentTabName].classList.add('activeTab');        
+        this.tabs[this.currentTabName].button.classList.add('activeTabBtn');
+        this.tabs[this.currentTabName].element.classList.add('activeTab');        
     }
 }
