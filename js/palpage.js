@@ -39,20 +39,20 @@ export class PalPage {
         this.renderer.renderPalettesList(ppalsCanv, this.scale);
 
         ppalsCanv.addEventListener('mousemove', e=> {
-            let ppalID = this.renderer.getPointedPaletteID(ppalsCanv, e, this.scale);
+            let ppalID = this.renderer.getPointedFromX(ppalsCanv, e, this.scale);
             this.renderer.renderPalettesList(ppalsCanv, this.scale, ppalID);
             this.elements.ppalsmove.innerHTML = `<b>ID:</b> ${ppalID} / <b>Page:</b> ${~~(ppalID/64)}`;
         })
 
         ppalsCanv.addEventListener('click', e=> {
-            let ppalID = this.renderer.getPointedPaletteID(ppalsCanv, e, this.scale);
+            let ppalID = this.renderer.getPointedFromX(ppalsCanv, e, this.scale);
             this.select(ppalID);
         });
 
         let selPpalCanv = this.elements.selppalcanv;
         selPpalCanv.addEventListener('mousemove', e=> {
             if(this.selectedPaletteID == -1) return;
-            let colorPos = this.renderer.getPointedPaletteID(selPpalCanv, e, this.selScale);
+            let colorPos = this.renderer.getPointedFromX(selPpalCanv, e, this.selScale);
             this.showColorDetails(colorPos);
         });
 

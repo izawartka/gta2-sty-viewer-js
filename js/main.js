@@ -22,7 +22,10 @@ class Main {
         this.sty;
         this.renderer;
         this.busy = false;
+
         this.tabs = new Tabs();
+        this.tabs.lockAllTabs(true);
+        this.tabs.lockTab('file', false);
 
         elements.file.addEventListener('click', (event) => {
             elements.filesrc_up.checked = true;
@@ -60,6 +63,7 @@ class Main {
                     .then(()=>{
                         this.log('Done!');
                         this.busy = false;
+                        this.tabs.lockAllTabs(false);
                         console.log(this);
                     });
             }, (error)=>{

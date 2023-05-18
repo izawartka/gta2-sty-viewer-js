@@ -227,7 +227,7 @@ export class STY {
         let b = 0;
         let i = this.data['DELS'].deltaPtrs[index.ptr];
         while(b < index.totalSize) {
-            if(db >= index.deltaSizes[currentDelta]) {
+            while(db >= index.deltaSizes[currentDelta]) {
                 currentDelta++;
                 deltas.push([]);
                 db = 0;

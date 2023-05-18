@@ -27,6 +27,7 @@ export const elementsNames = [
     'cardeltascanv',
     'cardeltasmode_o',
     'cardeltasmode_d',
+    'cardeltasmove',
 
     'ppalscanv',
     'ppalsmove',
@@ -79,6 +80,28 @@ export const carFlagNames = [
     ['collide_over', 'can drive over other cars'],
     ['popup', 'has popup headlights'],
 ];
+
+export const carDeltas = [
+    'rear right dent',
+    'rear left dent',
+    'front left dent',
+    'front right dent',
+    'windscreen damage',
+    'left brake light',
+    'left headlight',
+    'left front door #1',
+    'left front door #2',
+    'left front door #3',
+    'left front door #4',
+    'left back door #1',
+    'left back door #2',
+    'left back door #3',
+    'left back door #4',
+    'emergency lights #1 / roof decal',
+    'emergency lights #2',
+    'right rear emergency light',
+    'left rear emergency light',
+]
 
 export const carTurrets = { // by model
     17: { xOff: 0, yOff: 8, objID: 278, flip: true }, // firetruk
