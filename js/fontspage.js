@@ -6,27 +6,25 @@ export class FontsPage {
 
     render() {
         let fontsList = this.elements.fontslist;
-        let fontBases = this.sty.getAllFontBases();
-        let fontSizes = this.sty.getAllFontSizes();
 
         let fontsListHTML = '';
-        fontBases.forEach((base, id)=> {
+        this.sty.data.fonts.forEach((font) => {
             fontsListHTML += `
                 <div class="horizontal fontinlist">
                     <div class="fontdescr">
-                        <b>Font ID:</b> ${id}<br>
-                        <b>Font base</abbr>:</b> ${base}<br>
-                        <b>Font size</abbr>:</b> ${fontSizes[id]}<br>
+                        <b>Font ID:</b> ${font.id}<br>
+                        <b>Font base</abbr>:</b> ${font.sprites[0].relID}<br>
+                        <b>Font size</abbr>:</b> ${font.sprites.length}<br>
                     </div>
-                    <canvas class="fontcanv" id="fontcanv_${id}"></canvas>
+                    <canvas class="fontcanv" id="fontcanv_${font.id}"></canvas>
                 </div>`;
         });
 
         fontsList.innerHTML = fontsListHTML;
 
-        fontBases.forEach((base, id)=> {
-            let fontCanv = document.getElementById(`fontcanv_${id}`);
-            this.renderer.renderFontCharList(fontCanv, base, fontSizes[id]);
+        this.sty.data.fonts.forEach((font) => {
+            let fontCanv = document.getElementById(`fontcanv_${font.id}`);
+            this.renderer.renderFontCharList(fontCanv, font);
         });
     }
 }

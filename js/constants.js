@@ -15,6 +15,7 @@ export const elementsNames = [
     'selspriteinfo',
     'spritesmove',
     'gotosprite',
+    'gotospritebase',
     'spritesscroll',
     'spritebases',
 
@@ -38,6 +39,19 @@ export const elementsNames = [
 
     'fontslist',
     'fontsmove',
+];
+
+export const materialNames = [
+    'GRASS_DIRT',
+    'ROAD_SPECIAL',
+    'WATER',
+    'ELECTRIFIED',
+    'ELECTRIFIED_PLATFORM',
+    'WOOD',
+    'METAL',
+    'METAL_WALL',
+    'GRASS_DIRT_WALL',
+    'INFER'
 ];
 
 export const carIntNames = [
@@ -104,7 +118,34 @@ export const carDeltas = [
 ]
 
 export const carTurrets = { // by model
-    17: { xOff: 0, yOff: 8, objID: 278, flip: true }, // firetruk
-    22: { xOff: 0, yOff: -17, objID: 285, flip: false}, // gunjeep
-    54: { xOff: 0, yOff: 8, objID: 546, flip: false }, // tank
+    17: { xOff: 0, yOff: 8, objID: 278, rot: Math.PI }, // firetruk
+    22: { xOff: 0, yOff: -17, objID: 285, rot: 0}, // gunjeep
+    54: { xOff: 0, yOff: 8, objID: 546, rot: 0 }, // tank
+};
+
+export const paletteBases = [
+    'tile',
+    'sprite',
+    'car_remap',
+    'ped_remap',
+    'code_obj_remap',
+    'map_obj_remap',
+    'user_remap',
+    'font_remap'
+];
+
+export const spriteBases = [
+    'car',
+    'ped',
+    'code_obj',
+    'map_obj',
+    'user',
+    'font',
+];
+
+export const options = {
+    carsListMargin: 16,
+    deltasListMargin: 0,
+    palettesListScale: 4,
+    paletteSelScale: 4,
 };

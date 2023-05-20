@@ -1,49 +1,50 @@
-import {carIntNames, carRatingNames, carFlagNames, carDeltas, carTurrets } from './constants.js';
+import {carIntNames, carRatingNames, carFlagNames, carDeltas, carTurrets, options } from './constants.js';
 
 export class CarsPage {
     constructor(elements, sty, renderer, tabs) {
         Object.assign(this, {elements, sty, renderer, tabs});
         this.showCarHitbox = false;
         this.showCarTurret = true;
-        this.selectedRemap = -1;
-        this.selectedCarID = -1;
+        this.selectedRemap = null;
+        this.selectedCar = null;
+        this.onSpriteView = () => {};
         this.render();
     }
 
-    renderSelCanvas(carID) {
+    renderSelCanvas() {
         this.renderer.renderCarSel(
             this.elements.selcarcanv, 
-            carID,
+            this.selectedCar,
             this.selectedRemap,
             this.showCarTurret,
             this.showCarHitbox
         );
     }
 
-    renderCarInfo(carID, carInfo) {
-        let spriteID = this.sty.getCarSpriteID(carID);
-        let turretInfo = carTurrets[carInfo.model];
+    renderCarInfo() {
+        const car = this.selectedCar;
+        let turretInfo = carTurrets[car.model];
         let turretText = turretInfo ? `<span class="link" id="selcartursprite">code_obj/${turretInfo.objID}</span>` : ' - ';
         
-        this.renderSelCanvas(carID);
+        this.renderSelCanvas();
 
         let infoHTML = `
-            <b><abbr title="based on the order in the file">Entry ID</abbr>:</b> ${carID}<br>
-            <b>Model:</b> ${carInfo.model}<br>
-            <b>Codename:</b> ${carIntNames[carInfo.model]}<br>
-            <b>Capacity:</b> ${carInfo.passengers} + driver<br>
-            <b><abbr title="does the car appear on roads in singleplayer">Recycled</abbr>:</b> ${this.sty.getCarRecycled(carInfo.model) ? 'yes' : 'no'}<br>
-            <b><abbr title="rating of the car used to decide how often it appears on roads">Rating</abbr>:</b> ${carRatingNames[carInfo.rating]}<br>
-            <b>Sprite ID:</b> <span class="link" id="selcarsprite">car/${spriteID}</span><br>
+            <b><abbr title="based on the order in the file">Entry ID</abbr>:</b> ${car.id}<br>
+            <b>Model:</b> ${car.model}<br>
+            <b>Codename:</b> ${carIntNames[car.model]}<br>
+            <b>Passengers:</b> ${car.passengersCount} + driver<br>
+            <b><abbr title="does the car appear on roads in singleplayer">Recycled</abbr>:</b> ${car.recycled ? 'yes' : 'no'}<br>
+            <b><abbr title="rating of the car used to decide how often it appears on roads">Rating</abbr>:</b> ${carRatingNames[car.rating]}<br>
+            <b>Sprite ID:</b> <span class="link" id="selcarsprite">car/${car.sprite.relID}</span><br>
             <b>Turret sprite ID:</b> ${turretText}<br>
-            <b>Wreck type:</b> ${carInfo.wreck}<br>
+            <b>Wreck type:</b> ${car.wreckType}<br>
             <br>
-            <b>Phys. width:</b> ${carInfo.width} px<br>
-            <b>Phys. height:</b> ${carInfo.height} px<br>
-            <b>Front window offset:</b> ${carInfo.front_window_offset} px<br>
-            <b>Rear window offset:</b> ${carInfo.rear_window_offset} px<br>
-            <b>Front wheels offset:</b> ${carInfo.front_wheel_offset} px<br>
-            <b>Rear wheels offset:</b> ${carInfo.rear_wheel_offset} px<br><br>
+            <b>Phys. width:</b> ${car.width} px<br>
+            <b>Phys. height:</b> ${car.height} px<br>
+            <b>Front window offset:</b> ${car.frontWindowOffset} px<br>
+            <b>Rear window offset:</b> ${car.rearWindowOffset} px<br>
+            <b>Front wheels offset:</b> ${car.frontWheelOffset} px<br>
+            <b>Rear wheels offset:</b> ${car.rearWheelOffset} px<br><br>
             <input type="checkbox" id="selcarhitbox" ${this.showCarHitbox?'checked':''}>
                 <label for="selcarhitbox">Show hitbox</label><br>
             <input type="checkbox" id="selcarturret" ${this.showCarTurret?'checked':''}>
@@ -52,101 +53,77 @@ export class CarsPage {
         
         this.elements.selcarinfo.innerHTML = infoHTML;
 
-        const localElements = {
-            'selcarsprite': {
-                action: 'click',
-                handler: e => {
-                    this.onSpriteView(spriteID);
-                }
-            },
-            'selcartursprite': {
-                action: 'click',
-                handler: e => {
-                    this.onSpriteView(this.sty.getSpriteBase('code_obj') + turretInfo.objID);
-                }
-            },
-            'selcarhitbox': {
-                action: 'change',
-                handler: e => {
-                    this.showCarHitbox = !this.showCarHitbox;   
-                    this.renderSelCanvas(carID);
-                }
-            },
-            'selcarturret': {
-                action: 'change',
-                handler: e => {
-                    this.showCarTurret = !this.showCarTurret;   
-                    this.renderSelCanvas(carID);
-                }
-            }
+        document.getElementById('selcarsprite').onclick = this.onSpriteView.bind(this, 'car', car.sprite.relID);
+        if(turretInfo)
+            document.getElementById('selcartursprite').onclick = this.onSpriteView.bind(this, 'code_obj', turretInfo.objID);
+        document.getElementById('selcarhitbox').onchange = e => {
+            this.showCarHitbox = !this.showCarHitbox;
+            this.renderSelCanvas();
         }
-
-        Object.keys(localElements).forEach(key => {
-            let element = document.getElementById(key);
-            if(!element) return;
-            element.addEventListener(localElements[key].action, localElements[key].handler);
-        });
+        document.getElementById('selcarturret').onchange = e => {
+            this.showCarTurret = !this.showCarTurret;
+            this.renderSelCanvas();
+        }
     }
 
-    renderCarFlagsInfo(carInfo) {
+    renderCarFlagsInfo() {
         let flagsInfoHTML = `<b>Flags:</b><br>`;
-        let carFlags = [...carInfo.info_flags, ...carInfo.info_flags_2];
         carFlagNames.forEach((flagName, i) => {
-            let active = carFlags[i];
-            flagsInfoHTML += `<input type="checkbox" onclick="return false;" ${active ? 'checked' : ''}>
+            let isActive = this.selectedCar.flags[i];
+            flagsInfoHTML += `<input type="checkbox" onclick="return false;" ${isActive ? 'checked' : ''}>
                 <abbr title="${flagName[1]}">${flagName[0]}</abbr><br>`;
         });
 
         this.elements.selcarflagsinfo.innerHTML = flagsInfoHTML;
     }
 
-    renderCarRemapsInfo(carID, carInfo) {
+    renderCarRemapsInfo() {
         let remapsHTML = `<b>Remaps:</b><br><div class="wrapedlist">`;
-        carInfo.remaps.forEach(remap => {
-            let ppalID = this.sty.getPPaletteID('car_remap', remap)
-            let ppal = this.sty.getPPalette(ppalID);
-            let color = [ppal[80*4+2], ppal[80*4+1], ppal[80*4]].join(', ');
-            remapsHTML += `<div class="remap" id="remap_${remap}"><div class="remapsq" style="background-color: rgb(${color});"></div>${remap}</div>`;
+        let remaps = this.selectedCar.remaps;
+        remaps.forEach(remap => {
+            let color = remap.physicalPalette.getRGBAColor(80).join(', ');
+            remapsHTML += `<div class="remap" id="remap_${remap.relID}"><div class="remapsq" style="background-color: rgb(${color});"></div>${remap.relID}</div>`;
         });
         remapsHTML += '<div class="remap" id="remap_clear"><div class="remapsq remapcl"></div>clear</div></div>';
         this.elements.selcarremaps.innerHTML = remapsHTML;
 
         let remapBtns = Array.from(document.getElementsByClassName('remap'));
         remapBtns.forEach(btn => {
-            btn.addEventListener('click', e => {
-                let remapID = parseInt(btn.id.split('_')[1]);
-                this.selectedRemap = this.sty.getPPaletteID('car_remap', remapID);
-                if(btn.id == 'remap_clear') this.selectedRemap = -1;
-                this.renderSelCanvas(carID);
-                this.renderCarDeltasInfo(carID);
-            });
+            btn.onclick = (e) => {
+                let remapID = btn.id.split('_')[1];
+                if(remapID == 'clear') {
+                    this.selectedRemap = null;
+                } else {
+                    let vpal = this.sty.data.virtualPalettes['car_remap'][parseInt(remapID)];
+                    this.selectedRemap = vpal.physicalPalette;
+                }
+                this.renderSelCanvas();
+                this.renderCarDeltasInfo();
+            };
         });
     }
     
-    renderCarDeltasInfo() {   
-        let carID = this.selectedCarID;
+    renderCarDeltasInfo() {  
         let deltasCanv = this.elements.cardeltascanv;
-        let overlayMode = this.elements.cardeltasmode_o.checked;
+        let changesOnly = this.elements.cardeltasmode_d.checked;
     
-        this.renderer.renderCarDeltas(deltasCanv, carID, this.selectedRemap, overlayMode);
+        this.renderer.renderCarDeltasList(deltasCanv, this.selectedCar, this.selectedRemap, changesOnly);
 
-        let carSpriteID = this.sty.getCarSpriteID(carID);
-        let carSpriteWidth = this.sty.getSpriteIndex(carSpriteID).size[0];
-        deltasCanv.addEventListener('mousemove', e=> {
-            let deltaID = this.renderer.getPointedFromX(deltasCanv, e, carSpriteWidth);
+        let carSpriteWidth = this.selectedCar.sprite.bitmap.width;
+        deltasCanv.onmousemove = (e) => {
+            let deltaID = this.renderer.getPointedFromX(deltasCanv, e, carSpriteWidth + options.deltasListMargin);
             this.elements.cardeltasmove.innerHTML = `<b>Delta ID:</b> ${deltaID} / <b>Typical use:</b> ${carDeltas[deltaID] || 'unknown'}`;
-        });
+        }
     }
 
-    select(carID) {
+    select(car) {
         this.elements.cardeltasmove.innerHTML = '';
-        this.selectedCarID = carID;
-        this.selectedRemap = -1;
-        let carInfo = this.sty.getCarInfo(carID);
-        this.renderCarInfo(carID, carInfo);
-        this.renderCarFlagsInfo(carInfo);
-        this.renderCarRemapsInfo(carID, carInfo);
-        this.renderCarDeltasInfo(carID);
+        this.selectedCar = car;
+        this.selectedRemap = null;
+        this.renderCarInfo();
+        this.renderCarFlagsInfo();
+        this.renderCarRemapsInfo();
+        this.renderCarDeltasInfo();
     }
 
     addSpritesPageReference(onSpriteView) {
@@ -157,20 +134,19 @@ export class CarsPage {
         let carsCanv = this.elements.carscanv;
         this.renderer.renderCarsList(carsCanv);
 
-        carsCanv.addEventListener('mousemove', e=> {
-            let carID = this.renderer.getPointedCarID(carsCanv, e);
-            let carModel = this.sty.getCarInfo(carID).model;
-            this.elements.carsmove.innerHTML = `<b>Model:</b> ${carModel} / <b>Codename:</b> ${carIntNames[carModel]}`;
-        })
+        carsCanv.onmousemove = (e) => {
+            let car = this.renderer.getPointedCar(carsCanv, e);
+            this.elements.carsmove.innerHTML = `<b>Model:</b> ${car.model} / <b>Codename:</b> ${carIntNames[car.model]}`;
+        }
         
-        carsCanv.addEventListener('click', e=> {
-            let carID = this.renderer.getPointedCarID(carsCanv, e);
-            this.select(carID);
-        });
+        carsCanv.onclick = (e) => {
+            let car = this.renderer.getPointedCar(carsCanv, e);
+            this.select(car);
+        }
 
-        this.elements.cardeltasmode_o.addEventListener('input', this.renderCarDeltasInfo.bind(this));
-        this.elements.cardeltasmode_d.addEventListener('input', this.renderCarDeltasInfo.bind(this));
+        this.elements.cardeltasmode_o.oninput = this.renderCarDeltasInfo.bind(this);
+        this.elements.cardeltasmode_d.oninput = this.renderCarDeltasInfo.bind(this);
 
-        this.select(0);
+        this.select(this.sty.data.cars[0]);
     }
 }

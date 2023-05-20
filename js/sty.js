@@ -1,7 +1,14 @@
-import {DataChunk} from './datachunk.js';
+import { OMPalette } from './model/palette.js';
+import { OMVirtualPalette } from './model/virtualPalette.js';
+import { OMTile } from './model/tile.js';
+import { OMSprite } from './model/sprite.js';
+import { OMCar } from './model/car.js';
+import { OMFont } from './model/font.js';
+import { paletteBases, spriteBases } from './constants.js';
 
 export class STY {
     constructor(binaryData) {
+        this.chunks = {};
         this.data = {};
 
         this.header = String.fromCharCode.apply(String, new Uint8Array(binaryData, 0, 4));
@@ -15,10 +22,12 @@ export class STY {
             let header = binaryData.slice(i, i+8);
             let name = String.fromCharCode.apply(String, new Uint8Array(header, 0, 4));
             let size = new Uint32Array(header, 4, 1)[0];
-            let chunk = binaryData.slice(i+8, i+8+size);
-            this.data[name] = new DataChunk(name, chunk);
+            let data = binaryData.slice(i+8, i+8+size);
+            this.chunks[name] = data;
             i+=size+8;
         }
+
+        this.createObjectModel();
     }
 
     isFileCorrect() {
@@ -32,214 +41,353 @@ export class STY {
         }
         return true;
     }
+    
+    createObjectModel() {
+        let palettes = this.parsePalettes();
+        let virtualPalettes = this.parseVirtualPalettes(palettes);
+        let tiles = this.parseTiles(virtualPalettes);
+        let spritePages = this.parseSpritePages();
+        let spriteIndexes = this.parseSpriteIndexes();
+        let sprites = this.parseSprites(spritePages, spriteIndexes, virtualPalettes);
+        let cars = this.parseCars(sprites, virtualPalettes);
+        let fonts = this.parseFonts(sprites);
 
-    getVPaletteID(baseName, objID) {
-        let palOffset = this.data['PALB'].paletteBases[baseName];
-        if(palOffset == undefined) {
-            console.warn(`Incorrect palette base name: ${baseName}`);
-            return 0;
-        }
-        return palOffset+objID;
+        this.parseMaterials(tiles);
+        this.parseCarDeltas(sprites);
+        this.parseRecycling(cars);
+
+        this.data = {
+            palettes,
+            virtualPalettes,
+            tiles,
+            sprites,
+            spritePagesCount: spritePages.length,
+            cars,
+            fonts,
+        };
     }
 
-    getPPaletteID(baseName, objID) {
-        let virtID = this.getVPaletteID(baseName, objID);
-        let palID = this.data['PALX'].virtualPalettes[virtID];
-        return palID;
+    parsePalettes() {
+        let PPAL = this.chunks['PPAL'];
+        let palData = this.readPagedContent(PPAL, 256, 256, 4, 256);
+        
+        return palData.map((data) => {
+            return new OMPalette(
+                data.pageID,
+                data.relID,
+                data.data
+            );
+        });
     }
 
-    getPPalette(paletteID) {
-        return this.data['PPAL'].pages[~~(paletteID/64)][paletteID%64];
+    parseVirtualPalettes(physicalPalettes) {
+        let PALX = this.chunks['PALX'];
+        let PALB = this.chunks['PALB'];
+
+        let unorderedVPals = new Uint16Array(PALX);
+        let bases = new Uint16Array(PALB);
+        let vPals = {};
+
+        this.mapBases(unorderedVPals, bases, paletteBases, (value, baseName, relID) => {
+            let vPal = new OMVirtualPalette(
+                baseName,
+                relID,
+                physicalPalettes[value]
+            );
+
+            if(!vPals[baseName]) vPals[baseName] = [];
+            vPals[baseName][relID] = vPal;
+
+        });
+
+        return vPals;
     }
 
-    getTile(pageID, tileIDinPage) {
-        return this.data['TILE'].pages[pageID][tileIDinPage];
-    }
+    parseMaterials(tiles) {
+        let data = new Uint16Array(this.chunks['SPEC']);
 
-    getTileByID(tileID) { 
-        return this.data['TILE'].pages[~~(tileID/64)][tileID%64];
-    }
-
-    getAllTilesArray() {
-        let tiles = [];
-        this.data['TILE'].pages.forEach(page => {
-            tiles.push(...page);
-        })
-        return tiles;
-    }
-
-    getAllPPalettesArray() {
-        let palettes = [];
-        this.data['PPAL'].pages.forEach(page => {
-            palettes.push(...page);
-        })
-        return palettes;
-    }
-
-    getSpritesCount() {
-        return this.data['SPRX'].spriteIndexes.length;
-    }
-
-    getTilePagesArray() {
-        return this.data['TILE'].pages;
-    }
-
-    getPPalettePagesCount() {
-        return this.data['PPAL'].pages.length
-    }
-
-    getSpriteIndex(id) {
-        let index = this.data['SPRX'].spriteIndexes[id];
-        if(!index) console.warn(`Incorrect sprite ID: ${id}`);
-        return JSON.parse(JSON.stringify(index));
-    }
-
-    getSpritePixelPos(ptr) {
-        let page = ~~(ptr / (256*256));
-        let ptrPage = ptr%(256*256);
-        let x = ptrPage % 256;
-        let y = ~~(ptrPage / 256);
-        return { page, x, y, absX: page * 256 + x};
-    }
-
-    getSpritePixel(page, x, y) {
-        let ptr = y * 256 + x;
-        return this.data['SPRG'].pages[page][ptr];
-    }
-
-    getSpriteIDByPos(x, y) {
-        for(let s = 0; s < this.getSpritesCount(); s++) {
-            let index = this.data['SPRX'].spriteIndexes[s];
-            let pos = this.getSpritePixelPos(index.ptr);
-            if(x < pos.absX) continue;
-            if(y < pos.y) continue;
-            if(~~(x / 256) != pos.page) continue;
-            
-            if(x > pos.absX + index.size[0]) continue;
-            if(y > pos.y + index.size[1]) continue;
-
-            return s
-        }
-
-        return -1;
-    }
-
-    getMaterialName(tileID) {
-        const materialNames = [
-            'GRASS_DIRT',
-            'ROAD_SPECIAL',
-            'WATER',
-            'ELECTRIFIED',
-            'ELECTRIFIED_PLATFORM',
-            'WOOD',
-            'METAL',
-            'METAL_WALL',
-            'GRASS_DIRT_WALL',
-            'INFER'
-        ];
-
-        let materialID = this.data['SPEC'].materials[tileID];
-        if(materialID == undefined) return '';
-        return materialNames[materialID];
-    }
-
-    getSpriteType(spriteID) {
-        let typeid = 0;
-        while (Object.values(this.data['SPRB'].spriteBases)[typeid] <= spriteID) {
-            typeid++;
-        }
-
-        return Object.keys(this.data['SPRB'].spriteBases)[typeid-1];
-    }
-
-    getSpriteBase(type) {
-        return this.data['SPRB'].spriteBases[type];
-    }
-
-    getAllSpriteBases() {
-        return this.data['SPRB'].spriteBases;
-    }
-
-    getAllPalBases() {
-        return this.data['PALB'].paletteBases;
-    }
-
-    getAllCarsInfo() {
-        return this.data['CARI'].carsInfo;
-    }
-
-    getCarInfo(id) {
-        return this.data['CARI'].carsInfo[id];
-    }
-
-    getCarSpriteID(carID) {
-        let spriteID = this.data['CARI'].carsInfo[carID].spriteID;
-        let spriteBase = this.data['SPRB'].spriteBases['car'];
-        return spriteID + spriteBase;
-    }
-
-    getCarRecycled(carModel) {
-        return this.data['RECY'].recyclingInfo.includes(carModel);
-    }
-
-    getPPalUsage(paletteID) {
-        let usage = {};
-        let palb = Object.entries(this.data['PALB'].paletteBases);
-        let vpalL = this.data['PALB'].totalLength;
-
-        this.data['PALX'].virtualPalettes.forEach((ppal, vpal) => {
-            if(ppal != paletteID) return;
-            if(vpal >= vpalL) return;
-
-            for(let i = 1; i <= palb.length; i++) {
-                if(palb[i] && vpal >= palb[i][1]) continue;
-
-                let baseName = palb[i-1][0];
-                if(!usage[baseName]) usage[baseName] = [];
-                usage[baseName].push(vpal - palb[i-1][1]);
-                break;
+        let material = 0;
+        for(let i = 0; i < data.length; i++) {
+            if(data[i] == 0) {
+                material++;
+                continue;
             }
+
+            tiles[data[i]].material = material;
+        }
+    }
+
+    parseTiles(virtualPalettes, materials) {
+        let TILE = this.chunks['TILE'];
+        let tilesData = this.readPagedContent(TILE, 256, 256, 64, 64);
+
+        return tilesData.map((data, id) => {
+            return new OMTile(
+                id,
+                data.pageID,
+                data.relID,
+                data.data,
+                virtualPalettes['tile'][id]
+            );
         });
-        return usage;
     }
 
-    getAllFontBases() {
-        return this.data['FONB'].fontBases;
+    parseSpritePages() {
+        let SPRG = this.chunks['SPRG'];
+        let pages = [];
+
+        for(let i = 0; i < SPRG.byteLength; i+=256*256) {
+            let pageData = new Uint8Array(SPRG, i, 256*256);
+            pages.push(pageData);
+        }
+
+        return pages;
     }
 
-    getAllFontSizes() {
-        let fonb = this.data['FONB'].fontBases;
-        return fonb.map((base, i) => {
-            if(i == fonb.length-1) return this.data['FONB'].totalLength - base;
-            return fonb[i+1] - base;
+    parseSpriteIndexes() {
+        let SPRX = this.chunks['SPRX'];
+        let indexes = [];
+
+        for(let i = 0; i < ~~(SPRX.byteLength/8); i++) {
+            let indexData = SPRX.slice(i*8, i*8+8);
+            let size = new Uint8Array(indexData, 4, 2);
+
+            let index = {
+                ptr: new Uint32Array(indexData, 0)[0],
+                width: size[0],
+                height: size[1]
+            }
+
+            indexes[i] = index;
+        }
+
+        return indexes;
+    }
+
+    parseSprites(spritePages, spriteIndexes, virtualPalettes) {
+        let SPRB = this.chunks['SPRB'];
+        let bases = new Uint16Array(SPRB);
+
+        let sprites = {};
+        this.mapBases(spriteIndexes, bases, spriteBases, (spriteIndex, baseName, relID, absID) => {
+            let sprite = new OMSprite(
+                baseName,
+                relID,
+                spriteIndex,
+                this.getSpriteData(spritePages, spriteIndex),
+                virtualPalettes['sprite'][absID],
+            );
+
+            if(!sprites[baseName]) sprites[baseName] = [];
+            sprites[baseName][relID] = sprite;
         });
+
+        return sprites;
     }
 
-    // this code begs for refactoring
-    getSpriteDeltas(spriteID) {
-        let index = this.data['DELX'].deltaIndexes.filter(index => index.spriteID == spriteID)[0];
-        if(!index) return [];
+    parseCarDeltas(sprites) {
+        let DELX = this.chunks['DELX'];
+        let DELS = this.chunks['DELS'];
 
-        let deltas = [[]];
-
-        let currentDelta = 0;
-        let db = 0;
         let b = 0;
-        let i = this.data['DELS'].deltaPtrs[index.ptr];
-        while(b < index.totalSize) {
-            while(db >= index.deltaSizes[currentDelta]) {
-                currentDelta++;
-                deltas.push([]);
-                db = 0;
+        let sb = 0;
+        while(b < DELX.byteLength) {
+            let spriteID = new Uint16Array(DELX, b, 1)[0];
+            let sprite = sprites['car'][spriteID];
+
+            let count = new Uint8Array(DELX, b+2, 1)[0];
+            let deltaSizes = Array.from(new Uint16Array(DELX.slice(b+4, b+4+count*2), 0, count));
+
+            for(let i = 0; i < count; i++) {
+                let deltas = [];
+                let end = sb + deltaSizes[i];
+                while(sb < end) {
+                    let offset = new Uint16Array(DELS.slice(sb, sb+2), 0, 1)[0];
+                    let size = new Uint8Array(DELS, sb+2, 1)[0];
+                    deltas.push({
+                        offset,
+                        data: new Uint8ClampedArray(DELS, sb+3, size)
+                    });
+                    sb += 3+size;
+                }
+
+                if(sprite) {
+                    sprite.addDelta(deltas);
+                }
             }
             
-            let delta = this.data['DELS'].deltas[i];
-            deltas[currentDelta].push(delta);
-            b+=delta.size+3;
-            db+=delta.size+3;
-            i++;
+            b+=4+count*2;
+        }
+    }
+
+    parseCars(sprites, virtualPalettes) {
+        let CARI = this.chunks['CARI'];
+
+        let cars = [];
+        let b = 0;
+        let id = 0;
+        let lastSpriteID = -1;
+        while(b < CARI.byteLength) {
+            let remapsCount = new Uint8Array(CARI, b+4, 1)[0];
+            let doorsCount = new Uint8Array(CARI, b+14+remapsCount, 1)[0];
+            let dataSize = 15 + doorsCount*2 + remapsCount;
+            let carData = new Uint8Array(CARI, b, dataSize);
+            let carInfo = {};
+            const infoKeys = [
+                'model', 'sprite',
+                'w', 'h',
+                '', 'passengers',
+                'wreck', 'rating',
+                'front_wheel_offset',
+                'rear_wheel_offset',
+                'front_window_offset',
+                'rear_window_offset',
+                'info_flags',
+                'info_flags_2',
+            ];
+            const signedKeys = [8, 9, 10, 11];
+            const flags = [12, 13];
+
+            infoKeys.forEach((key, i) => {
+                if(key == '') return;
+                let val = carData[i];
+                if(signedKeys.includes(i))
+                    val = val <<24 >>24;
+                if(flags.includes(i)) {
+                    val = val.toString(2);
+                    while(val.length < 8) {
+                        val = '0'+val;
+                    }
+                    val = val.split('').map(value => value == '1').reverse();
+                }
+                carInfo[key] = val;
+            });
+            
+            if(carInfo['sprite']) lastSpriteID++;
+            const car = new OMCar(id, carInfo, sprites['car'][lastSpriteID]);
+            
+            let remapsIDs = Array.from(new Uint8Array(CARI, b+14, remapsCount));
+            remapsIDs.forEach((remapID) => {
+                car.addRemap(virtualPalettes['car_remap'][remapID]);
+            });
+
+            let doorsInfo = Array.from(new Int8Array(CARI, b+15+remapsCount, doorsCount*2));
+            for(let d = 0; d < doorsInfo.length; d+=2) {
+                car.addDoor(doorsInfo[d], doorsInfo[d+1]);
+            }
+
+            b+=dataSize;
+            id++;
+
+            cars.push(car);
         }
 
-        return deltas;
+        return cars;
+    }
+
+    parseRecycling(cars) {
+        let RECY = this.chunks['RECY'];
+        let recyclingInfo = Array.from(new Uint8Array(RECY));
+        let carsByModel = [];
+        cars.forEach((car) => {
+            carsByModel[car.model] = car;
+        });
+        recyclingInfo.forEach((model) => {
+            if(!carsByModel[model]) return;
+            carsByModel[model].recycled = true;
+        });
+    }
+
+    parseFonts(sprites) {
+        let FONB = this.chunks['FONB'];
+        let bases = Array.from(new Uint16Array(FONB)).slice(1);
+        let fonts = [];
+
+        let sum = 0;
+        for(let i = 0; i < bases.length; i++) {
+            let fontSprites = sprites['font'].slice(sum, sum+bases[i]);
+            fonts[i] = new OMFont(i, fontSprites);
+            sum += bases[i];
+        }
+
+        return fonts;
+    }
+
+    getSpriteData(spritePages, spriteIndex) {
+        let pageID = ~~(spriteIndex.ptr/(256*256));
+        let relPtr = spriteIndex.ptr%(256*256);
+        let spriteData = [];
+        for(let i = 0; i < spriteIndex.height; i++) {
+            let start = relPtr+i*256;
+            let row = spritePages[pageID].slice(start, start+spriteIndex.width);
+            spriteData.push(...row);
+        }
+
+        return spriteData
+    }
+
+    mapBases(unordered, bases, baseNames, cb) {
+        let currentID = 0;
+        
+        for(let i = 0; i < bases.length; i++) {
+            let baseName = baseNames[i];
+
+            for(let j = 0; j < bases[i]; j++) {
+                cb(unordered[j+currentID], baseName, j, j+currentID);
+            }
+
+            currentID += bases[i];
+        }
+    }
+
+    readPagedContent(data, pageWidth, pageHeight, segmentWidth, segmentHeight) {
+        let pagesCount = data.byteLength/(pageWidth*pageHeight);
+        let pageSize = pageWidth*pageHeight;
+        let segmentsPerPage = pageSize/(segmentWidth*segmentHeight);
+        let segmentsWidthCount = ~~(pageWidth/segmentWidth);
+        let segments = [];
+
+        for(let i = 0; i < pagesCount; i++) {
+            let pageData = new Uint8Array(data, i*pageSize, pageSize);
+
+            for(let j = 0; j < pageSize/segmentWidth; j++) {
+                let segX = j%segmentsWidthCount;
+                let segY = ~~(j/(segmentsWidthCount*segmentHeight));
+                let segID = segY*segmentsWidthCount + segX;
+                let segAbsID = i*segmentsPerPage + segID;
+
+                if(!segments[segAbsID]) segments[segAbsID] = {
+                    data: [],
+                    pageID: i,
+                    relID: segID,
+                };
+                
+                segments[segAbsID].data.push(...pageData.slice(j*segmentWidth, j*segmentWidth+segmentWidth));
+            }
+        }
+
+        return segments;
+    }
+
+    ///////////////////////////
+
+    getSpritesAsArray() {
+        return Object.values(this.data.sprites)
+            .reduce((acc, val) => acc.concat(val), []);
+    }
+
+    getPaletteUsage(palette) {
+        let usage = {};
+
+        for (const [baseName, vPals] of Object.entries(this.data.virtualPalettes)) {
+            let vPalsCount = vPals.length;
+            for(let i = 0; i < vPalsCount; i++) {
+                if(vPals[i].physicalPalette != palette) continue;
+                if(!usage[baseName]) usage[baseName] = [];
+                usage[baseName].push(i);
+            }
+        }
+
+        return usage;
     }
 }

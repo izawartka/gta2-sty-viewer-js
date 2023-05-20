@@ -13,7 +13,6 @@ a {
 }
 
 input[type="file"]::-webkit-file-upload-button,
-select,
 button,
 textarea,
 input[type="text"] {
@@ -23,6 +22,12 @@ input[type="text"] {
     padding: 3px 6px;
     margin-bottom: 4px;
     cursor: pointer;
+}
+
+select {
+    background-color: black;
+    border: 2px solid white;
+    color: white;
 }
 
 textarea {
@@ -172,4 +177,5 @@ span.link {
 .fontinlist {
     margin: 8px 0;
     align-items: flex-end;
+    flex-wrap: nowrap;
 }

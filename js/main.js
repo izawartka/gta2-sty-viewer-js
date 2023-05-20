@@ -99,9 +99,9 @@ class Main {
             this.tilesPage = new TilesPage(this.elements, this.sty, this.renderer);
             this.spritesPage = new SpritesPage(this.elements, this.sty, this.renderer);
             this.carsPage = new CarsPage(this.elements, this.sty, this.renderer, this.tabs);
-            this.carsPage.addSpritesPageReference((id) => {
+            this.carsPage.addSpritesPageReference((baseName, spriteID) => {
                 this.tabs.showTab('sprites');
-                this.spritesPage.goTo(id);
+                this.spritesPage.goToSprite(baseName, spriteID);
             });
             this.ppalPage = new PalPage(this.elements, this.sty, this.renderer);
             this.fontsPage = new FontsPage(this.elements, this.sty, this.renderer);
