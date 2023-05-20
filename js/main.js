@@ -1,12 +1,12 @@
 import { STY } from './sty.js';
 import { Renderer } from './renderer.js';
 import { Tabs } from './tabs.js';
-import { TilesPage } from './tilespage.js';
-import { SpritesPage } from './spritespage.js';
-import { PalPage } from './palpage.js';
-import { CarsPage } from './carspage.js';
-import { FontsPage } from './fontspage.js';
 import { elementsNames } from './constants.js';
+import { TilesPage } from './pages/tilespage.js';
+import { SpritesPage } from './pages/spritespage.js';
+import { PalPage } from './pages/palpage.js';
+import { CarsPage } from './pages/carspage.js';
+import { FontsPage } from './pages/fontspage.js';
 
 let elements = {};
 

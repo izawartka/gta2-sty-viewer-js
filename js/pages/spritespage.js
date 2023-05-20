@@ -1,5 +1,5 @@
-import { spriteBases } from "./constants.js";
-import { Helper } from "./helper.js";
+import { spriteBases } from "../constants.js";
+import { Helper } from "../helper.js";
 
 export class SpritesPage {
     constructor(elements, sty, renderer) {

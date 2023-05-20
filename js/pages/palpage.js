@@ -1,5 +1,5 @@
-import { Helper } from "./helper.js";
-import { options, paletteBases } from "./constants.js"
+import { Helper } from "../helper.js";
+import { options, paletteBases } from "../constants.js"
 
 export class PalPage {
     constructor(elements, sty, renderer) {

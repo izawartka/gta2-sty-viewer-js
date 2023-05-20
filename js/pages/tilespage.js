@@ -1,4 +1,4 @@
-import { materialNames } from "./constants.js";
+import { materialNames } from "../constants.js";
 
 export class TilesPage {
     constructor(elements, sty, renderer) {

@@ -1,4 +1,4 @@
-import {carIntNames, carRatingNames, carFlagNames, carDeltas, carTurrets, options } from './constants.js';
+import {carIntNames, carRatingNames, carFlagNames, carDeltas, carTurrets, options } from '../constants.js';
 
 export class CarsPage {
     constructor(elements, sty, renderer, tabs) {
