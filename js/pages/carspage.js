@@ -102,6 +102,20 @@ export class CarsPage {
             };
         });
     }
+
+    renderCarDoorsInfo() {
+        let doorsHTML = `<b>Doors:</b><br><div class="wrapedlist">`;
+        let doors = this.selectedCar.doors;
+        doors.forEach(door => {
+            doorsHTML += `<div class="door">
+                x: ${door.x}<br>
+                y: ${door.y}<br>
+                <abbr title="peds should enter the car at this door by simply walking in, not sitting down">bus</abbr>: ${door.bus ? 'yes' : 'no'}<br>
+            </div>`;
+        });
+        doorsHTML += '</div>';
+        this.elements.selcardoors.innerHTML = doorsHTML;
+    }
     
     renderCarDeltasInfo() {  
         let deltasCanv = this.elements.cardeltascanv;
@@ -124,6 +138,7 @@ export class CarsPage {
         this.renderCarFlagsInfo();
         this.renderCarRemapsInfo();
         this.renderCarDeltasInfo();
+        this.renderCarDoorsInfo();
     }
 
     addSpritesPageReference(onSpriteView) {

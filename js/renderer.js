@@ -227,6 +227,13 @@ export class Renderer {
         ctx.strokeRect(corx, cy+car.rearWindowOffset+.5, car.width-1, car.frontWindowOffset-car.rearWindowOffset-1);
         ctx.strokeStyle = '#fff';
         ctx.strokeRect(corx, cory, car.width-1, car.height-1);
+        ctx.fillStyle = '#0f08';
+        for(let i = 0; i < car.doors.length; i++) {
+            let door = car.doors[i];
+            ctx.beginPath();
+            ctx.arc(cx+door.x, cy+door.y, 3, 0, 2*Math.PI);
+            ctx.fill();
+        }
     }
 
     renderCarDeltasList(canvas, car, remap = null, changesOnly = false) {

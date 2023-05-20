@@ -25,6 +25,10 @@ export class OMCar {
     }
 
     addDoor(x, y) {
-        this.doors.push({x, y});
+        this.doors.push({
+            bus: Math.abs(x) > 64,
+            x: x%64, 
+            y
+        });
     }
 }

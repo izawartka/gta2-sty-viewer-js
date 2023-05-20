@@ -25,6 +25,7 @@ export const elementsNames = [
     'selcarinfo',
     'selcarremaps',
     'selcarflagsinfo',
+    'selcardoors',
     'cardeltascanv',
     'cardeltasmode_o',
     'cardeltasmode_d',

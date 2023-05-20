@@ -179,3 +179,13 @@ span.link {
     align-items: flex-end;
     flex-wrap: nowrap;
 }
+
+.door {
+    border: 1px solid white;
+    padding: 2px;
+    margin-bottom: 4px;
+}
+
+label {
+    user-select: none;
+}

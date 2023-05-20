@@ -3,27 +3,28 @@
 ## About
 A web viewer for GTA2 graphics files (.sty) written from scratch in pure JS. Features so far:
 - Full support for these weird GTA2 virtual and physical palettes
-- Browsing tiles & info about them
-- Browsing sprites
-    - Full info about selected sprite
-    - Applying remaps (changes aren't saved to the file)
-    - Getting sprite by its ID
-- Info about sprite bases
-- Browsing cars
-    - Info about their hitboxes, flags, capacity, etc.
-    - Displaying special cars with their turrets (tank, firetruck, gunjeep)
-    - Repainting them 
-    - Showing their deltas (veriants with lights turned on, open doors etc.)
-- Browsing physical palettes
-    - Info about what sprites/tiles they are used by
-    - Info about specific colors
-- Info about palette bases
+- Tiles viewer
+    - Info about selected tile
+- Sprites viewer
+    - Detailed info about selected sprite
+    - Previewing remaps
+    - Searching sprites by their base and ID
+- Info about sprite bases (sprites count)
+- Cars viewer
+    - Info about selected car's hitboxes, flags, traffic info, doors, etc.
+    - Tank, Gunjeep and Firetruck are displayed with their turrets
+    - Previewing remaps
+    - Deltas viewer (veriants of car's sprite with lights turned on, doors open etc.)
+- Palettes viewer
+    - Info about what sprites/tiles uses selected palette
+    - Info about specific colors 
+- Info about palette bases (virtual palettes count)
 - Fonts list
 
 ## To do
-- Renderer refactor
+- Editor
+- Exporing tiles/sprites/palettes
 - Virtual palettes list maybe?
-- Editor maybe?
 - ...
 
 ## Example file
@@ -32,7 +33,6 @@ and run it on your server, just drop `bil.sty` file from `<GTA2 root folder>\dat
 root folder.
 
 ## Online link
-(Updated more frequently than this page)
 https://maseuko.pl/soft/styjs/
 
 ## Author(s)
