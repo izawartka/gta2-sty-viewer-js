@@ -1,12 +1,12 @@
 import { STY } from './sty.js';
 import { Renderer } from './renderer.js';
 import { Tabs } from './tabs.js';
-import { TilesPage } from './tilespage.js';
-import { SpritesPage } from './spritespage.js';
-import { PalPage } from './palpage.js';
-import { CarsPage } from './carspage.js';
-import { FontsPage } from './fontspage.js';
 import { elementsNames } from './constants.js';
+import { TilesPage } from './pages/tilespage.js';
+import { SpritesPage } from './pages/spritespage.js';
+import { PalPage } from './pages/palpage.js';
+import { CarsPage } from './pages/carspage.js';
+import { FontsPage } from './pages/fontspage.js';
 
 let elements = {};
 
@@ -99,9 +99,9 @@ class Main {
             this.tilesPage = new TilesPage(this.elements, this.sty, this.renderer);
             this.spritesPage = new SpritesPage(this.elements, this.sty, this.renderer);
             this.carsPage = new CarsPage(this.elements, this.sty, this.renderer, this.tabs);
-            this.carsPage.addSpritesPageReference((id) => {
+            this.carsPage.addSpritesPageReference((baseName, spriteID) => {
                 this.tabs.showTab('sprites');
-                this.spritesPage.goTo(id);
+                this.spritesPage.goToSprite(baseName, spriteID);
             });
             this.ppalPage = new PalPage(this.elements, this.sty, this.renderer);
             this.fontsPage = new FontsPage(this.elements, this.sty, this.renderer);

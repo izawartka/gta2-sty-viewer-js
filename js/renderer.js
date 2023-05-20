@@ -1,4 +1,4 @@
-import { carTurrets } from "./constants.js";
+import { carTurrets, options } from "./constants.js";
 
 export class Renderer {
     constructor(sty) {
@@ -6,64 +6,260 @@ export class Renderer {
         this.cachedPalCanv = undefined;
     }
 
-    getTile(tilePageID, tileIDinPage) {
-        let tileID = tilePageID * 16 + tileIDinPage;
-        let tile = this.sty.getTile(tilePageID, tileIDinPage);
+    renderBitmap(canvas, bitmap, customPalette = null) {
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        const ctx = canvas.getContext('2d');
 
-        let palID = this.sty.getPPaletteID('tile', tileID);
-        let pal = this.sty.getPPalette(palID);
+        ctx.putImageData(bitmap.getImgData(customPalette), 0, 0);
+    }
 
-        const imgData = new ImageData(64, 64);
+    getRelativePos(canvas, e) {
+        const rect = canvas.getBoundingClientRect();
+        let x = e.clientX - rect.left;
+        let y = e.clientY - rect.top;
+        return {x, y};
+    }
 
-        for(let p = 0; p < 64*64; p++) {
-            imgData.data[p*4+0] = pal[tile[p]*4+2];
-            imgData.data[p*4+1] = pal[tile[p]*4+1];
-            imgData.data[p*4+2] = pal[tile[p]*4+0];
-            imgData.data[p*4+3] = 255 - pal[tile[p]*4+3];
+    combineLayers(layers, width, height) {
+        const layersCount = layers.length;
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.save();
+        canvas.width = width;
+        canvas.height = height;
+
+        for(let i = 0; i < layersCount; i++) {
+            const layerCanvas = document.createElement('canvas');
+            layerCanvas.width = layers[i].width;
+            layerCanvas.height = layers[i].height;
+            layerCanvas.getContext('2d').putImageData(layers[i].imgData, 0, 0);
+
+            if(layers[i].rot != 0) {
+                let cx = layers[i].width>>1;
+                let cy = layers[i].height>>1;
+                ctx.translate(layers[i].x+cx, layers[i].y+cy);
+                ctx.rotate(layers[i].rot);
+                ctx.translate(-layers[i].x-cx, -layers[i].y-cy);
+            }
+            ctx.drawImage(layerCanvas, layers[i].x, layers[i].y);
+            ctx.restore();
+            layerCanvas.remove();
         }
 
+        const imgData = ctx.getImageData(0, 0, width, height);
+        canvas.remove();
         return imgData;
     }
 
-    renderTile(canvas, tilePageID, tileIDinPage) {
-        canvas.width = 64;
-        canvas.height = 64;
-        const ctx = canvas.getContext('2d');
-        const imgData = this.getTile(tilePageID, tileIDinPage);
+    applyDelta(bitmap, delta, changesOnly = false) {
+        const out = bitmap.clone();
+        if(changesOnly) out.data.fill(0);
 
-        ctx.putImageData(imgData, 0, 0);
+        let p = 0;
+        for(let i = 0; i < delta.length; i++) {
+            p += delta[i].offset;
+            let size = delta[i].data.length;
+            for(let j = 0; j < size; j++) {
+                let ptr = (p>>8)*out.width + (p%256);
+                out.data[ptr] = delta[i].data[j];
+                p++;
+            }
+        }
+        return out;
     }
 
+    ////////////////////////////////
+
     renderTilesList(canvas) {
-        let tilePages = this.sty.getTilePagesArray();
-        canvas.width = 256 * tilePages.length;
+        let tilesCount = this.sty.data.tiles.length;
+        let pagesCount = Math.ceil(tilesCount/16);
+        canvas.width = 256 * pagesCount;
         canvas.height = 256;
         const ctx = canvas.getContext('2d');
 
-        tilePages.forEach((tilesPage, tilePageID) => {
-            for(let t = 0; t < tilesPage.length; t++) {
-                let x = (t % 4)*64 + tilePageID*256;
-                let y = ~~(t/4)*64; 
+        for(let i = 0; i < tilesCount; i++) {
+            let x = ~~(i/16)*4+(i%4);
+            let y = ~~(i/4)%4;
+            let imgData = this.sty.data.tiles[i].bitmap.getImgData();
 
-                const imgData = this.getTile(tilePageID, t);
-                ctx.putImageData(imgData, x, y);
-            }
-        });
+            ctx.putImageData(imgData, x*64, y*64);
+        }
     }
 
     getPointedTileID(canvas, e) {
-        let rect = canvas.getBoundingClientRect();
-
-        let mx = e.clientX - rect.left;
-        let my = e.clientY - rect.top;
-        let pageID = ~~(mx / 256);
-        let tileIDinPage = ~~((mx % 256)/64) + (~~(my/64))*4;
+        let pos = this.getRelativePos(canvas, e);
+        let pageID = ~~(pos.x / 256);
+        let tileIDinPage = ~~((pos.x % 256)/64) + (~~(pos.y/64))*4;
 
         return pageID*16+tileIDinPage;
     }
 
-    renderPalettesList(canvas, xScale = 4, xMarker = -1) {
-        if(!this.cachedPalCanv) this.cachePalettesList(xScale);
+    renderSpritesList(canvas) {
+        canvas.width = 256 * this.sty.data.spritePagesCount;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+
+        const sprites = this.sty.getSpritesAsArray();
+        for(let i = 0; i < sprites.length; i++) {
+            let x = ~~sprites[i].absX
+            let y = ~~sprites[i].y;
+            let imgData = sprites[i].bitmap.getImgData();
+            ctx.putImageData(imgData, x, y);
+        }
+    }
+
+    getPointedSprite(canvas, e) {
+        const sprites = this.sty.getSpritesAsArray();
+        let pos = this.getRelativePos(canvas, e);
+        let page = ~~(pos.x / 256);
+
+        for(let i = 0; i < sprites.length; i++) {
+            if(sprites[i].pageID != page) continue;
+            if(pos.y < sprites[i].y) continue;
+            if(pos.y > sprites[i].y+sprites[i].bitmap.height) continue;
+            if(pos.x < sprites[i].absX) continue;
+            if(pos.x > sprites[i].absX+sprites[i].bitmap.width) continue;
+            return sprites[i];
+        }
+    }
+
+    renderCarsList(canvas) {
+        const cars = this.sty.data.cars;
+        const carsCount = cars.length;
+        let totalWidth = 0;
+        for(let i = 0; i < carsCount; i++) {
+            totalWidth += cars[i].width + options.carsListMargin;
+        }
+
+        canvas.width = totalWidth;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+
+        let x = 0;
+        for(let i = 0; i < carsCount; i++) {
+            let leftMargin = ~~((cars[i].sprite.bitmap.width - cars[i].width)/2);
+            let imgData = this.getCarImgData(cars[i], null, true)
+            ctx.putImageData(imgData, x-leftMargin, 0);
+            x += cars[i].width + options.carsListMargin;
+        }
+    }
+
+    getPointedCar(canvas, e) {
+        const pos = this.getRelativePos(canvas, e);
+        const cars = this.sty.data.cars;
+        const carsCount = cars.length;
+
+        let sumx = 0;
+        for(let i = 0; i < carsCount; i++) {
+            sumx += cars[i].width + options.carsListMargin;
+            if(sumx > pos.x) return cars[i];
+        }
+
+        return null;
+    }
+
+    getCarImgData(car, remap = null, showTurret = false, deltaID = -1, deltaChangesOnly = false) {
+        let bitmap = car.sprite.bitmap;
+        let width = bitmap.width;
+        let height = bitmap.height;
+
+        let deltaData = car.sprite.deltas[deltaID];
+        if(deltaData) bitmap = this.applyDelta(bitmap, deltaData, deltaChangesOnly);
+
+        const layers = [
+            {
+                imgData: bitmap.getImgData(remap),
+                x: 0, y: 0,
+                width, height,
+                rot: 0
+            }
+        ];
+        
+        if(showTurret) (() => {
+            let turretInfo = carTurrets[car.model];
+            if(!turretInfo) return;
+            const turretSprite = this.sty.data.sprites['code_obj'][turretInfo.objID];
+            if(!turretSprite) return;
+
+            let turWidth = turretSprite.bitmap.width;
+            let turHeight = turretSprite.bitmap.height;
+            let turX = ((width-turWidth) >> 1)+turretInfo.xOff;
+            let turY = ((height-turHeight) >> 1)+turretInfo.yOff;
+            if(turHeight + turY > height) height = turHeight + turY; /// temp to fix the tank
+
+            layers.push({
+                imgData: turretSprite.bitmap.getImgData(),
+                x: turX,
+                y: turY,
+                width: turWidth,
+                height: turHeight,
+                rot: turretInfo.rot
+            });
+        })();
+
+        return this.combineLayers(layers, width, height);
+    }
+
+    renderCarSel(canvas, car, remap = null, showTurret = false, showHitbox = false) {
+        let imgData = this.getCarImgData(car, remap, showTurret);
+        canvas.width = imgData.width;
+        canvas.height = imgData.height;
+        const ctx = canvas.getContext('2d');
+        ctx.putImageData(imgData, 0, 0);
+
+        if(!showHitbox) return;
+        this.renderCarHitbox(canvas, car);
+    }
+
+    renderCarHitbox(canvas, car) {
+        let ctx = canvas.getContext('2d');
+        ctx.lineWidth = 1;
+        let cx = car.sprite.bitmap.width >> 1;
+        let cy = car.sprite.bitmap.height >> 1;
+        let corx = (cx - (car.width >> 1)) + .5;
+        let cory = (cy - (car.height >> 1)) + .5;
+
+        ctx.strokeStyle = '#f88';
+        ctx.strokeRect(corx, cy+car.rearWheelOffset+.5, car.width-1, car.frontWheelOffset-car.rearWheelOffset-1);
+        ctx.strokeStyle = '#88f';
+        ctx.strokeRect(corx, cy+car.rearWindowOffset+.5, car.width-1, car.frontWindowOffset-car.rearWindowOffset-1);
+        ctx.strokeStyle = '#fff';
+        ctx.strokeRect(corx, cory, car.width-1, car.height-1);
+        ctx.fillStyle = '#0f08';
+        for(let i = 0; i < car.doors.length; i++) {
+            let door = car.doors[i];
+            ctx.beginPath();
+            ctx.arc(cx+door.x, cy+door.y, 3, 0, 2*Math.PI);
+            ctx.fill();
+        }
+    }
+
+    renderCarDeltasList(canvas, car, remap = null, changesOnly = false) {
+        let deltas = car.sprite.deltas;
+        let deltasCount = deltas.length;
+        let xDiff = car.sprite.bitmap.width + options.deltasListMargin;
+
+        let totalWidth = 0;
+        for(let i = 0; i < deltasCount; i++) {
+            totalWidth += xDiff
+        }
+
+        canvas.width = totalWidth;
+        canvas.height = car.sprite.bitmap.height;
+        const ctx = canvas.getContext('2d');
+
+        let x = 0;
+        for(let i = 0; i < deltasCount; i++) {
+            let imgData = this.getCarImgData(car, remap, false, i, changesOnly);
+            ctx.putImageData(imgData, ~~x, 0);
+            x += xDiff
+        }
+    }
+
+    renderPalettesList(canvas, xMarker = -1) {
+        if(!this.cachedPalCanv) this.cachePalettesList();
 
         canvas.width = this.cachedPalCanv.width;
         canvas.height = this.cachedPalCanv.height;
@@ -71,40 +267,44 @@ export class Renderer {
         ctx.drawImage(this.cachedPalCanv, 0, 0);
 
         if(xMarker == -1) return;
+        let xScale = options.palettesListScale;
         ctx.strokeStyle = 'white';
         ctx.lineWidth = 1;
         ctx.strokeRect(xMarker*xScale-.5, -.5, xScale+1, canvas.height+1);
     }
 
-    cachePalettesList(xScale = 4) {
+    cachePalettesList() {
+        let palettesCount = this.sty.data.palettes.length;
+        let xScale = options.palettesListScale;
         this.cachedPalCanv = document.createElement('canvas');
         this.cachedPalCanv.height = 256;
-        this.cachedPalCanv.width = this.sty.getPPalettePagesCount() * 64 * xScale;
+        this.cachedPalCanv.width = palettesCount * xScale;
         let ctx = this.cachedPalCanv.getContext('2d');
-
-        this.sty.getAllPPalettesArray().forEach((palette, paletteID) => {
+        
+        for(let i = 0; i < palettesCount; i++) {
+            let pal = this.sty.data.palettes[i].data;
             let imgData = ctx.createImageData(1, 256);
             for(let p = 0; p < 256*4; p+=4) {
-                imgData.data[p+0] = palette[p+2];
-                imgData.data[p+1] = palette[p+1];
-                imgData.data[p+2] = palette[p+0];
-                imgData.data[p+3] = 255-palette[p+3];
+                imgData.data[p+0] = pal[p+2];
+                imgData.data[p+1] = pal[p+1];
+                imgData.data[p+2] = pal[p+0];
+                imgData.data[p+3] = 255-pal[p+3];
             }
-            for(let i = 0; i < xScale; i++)
-            ctx.putImageData(imgData, paletteID*xScale+i, 0);
-        });
+            for(let j = 0; j < xScale; j++)
+                ctx.putImageData(imgData, i*xScale+j, 0);
+        }
     }
 
-    renderPaletteSel(canvas, paletteID, scale = 4, xMarker = -1) {
+    renderPaletteSel(canvas, palette, xMarker = -1) {
+        let scale = options.paletteSelScale;
         canvas.width = 256 * scale;
         canvas.height = 24;
         const ctx = canvas.getContext('2d');
 
-        let imgData = ctx.createImageData(256, 1);
-        let palette = this.sty.getPPalette(paletteID);
-        for(let p = 0; p < 256*4; p+=4) {
-            ctx.fillStyle = `rgba(${palette[p+2]}, ${palette[p+1]}, ${palette[p+0]}, ${255-palette[p+3]})`;
-            ctx.fillRect(p/4*scale, 0, scale, canvas.height);
+        for(let p = 0; p < 256; p++) {
+            let pixel = palette.getRGBAColor(p);
+            ctx.fillStyle = `rgba(${pixel.join(', ')})`;
+            ctx.fillRect(p*scale, 0, scale, canvas.height);
         }
 
         if(xMarker == -1) return;
@@ -120,308 +320,26 @@ export class Renderer {
         return id;
     }
 
-    getSprite(spriteID, remap = -1) {
-        let spriteIndex = this.sty.getSpriteIndex(spriteID);
-        if(!spriteIndex) {
-            console.error(`Sprite ${spriteID} not found!`);
-            return null;
-        }
-        let width = spriteIndex.size[0];
-        let height = spriteIndex.size[1];
-        let spritePos = this.sty.getSpritePixelPos(spriteIndex.ptr);
-        let palID = (remap == -1) ? this.sty.getPPaletteID('sprite', spriteID) : remap;
-        let pal = this.sty.getPPalette(palID);
-
-        const imgData = new ImageData(width, height);
-
-        for(let p = 0; p < width * height; p++) {
-            let x = p % width + spritePos.x;
-            let y = ~~(p/width) + spritePos.y;
-            let pixel = this.sty.getSpritePixel(spritePos.page, x, y);
-
-            imgData.data[p*4+0] = pal[pixel*4+2];
-            imgData.data[p*4+1] = pal[pixel*4+1];
-            imgData.data[p*4+2] = pal[pixel*4+0];
-            imgData.data[p*4+3] = 255 - pal[pixel*4+3];
-        }
-
-        return {
-            imgData, 
-            pos: spritePos,
-            index: spriteIndex,
-        };
-    }
-
-    getSpriteDelta(spriteID, deltaData, remap = -1) {
-        let spriteIndex = this.sty.getSpriteIndex(spriteID);
-        if(!spriteIndex) {
-            console.error(`Sprite ${spriteID} not found!`);
-            return null;
-        }
-        let width = spriteIndex.size[0];
-        let height = spriteIndex.size[1];
-        let spritePos = this.sty.getSpritePixelPos(spriteIndex.ptr);
-        let palID = (remap == -1) ? this.sty.getPPaletteID('sprite', spriteID) : remap;
-        let pal = this.sty.getPPalette(palID);
-
-        const imgData = new ImageData(width, height);
-        let ptr = 0;
-        for(let d = 0; d < deltaData.length; d++) {
-            ptr += deltaData[d].offset;
-            let x = (ptr) % 256;
-            let y = ~~((ptr)/256);
-            let pixel = y * width + x;
-
-            let data = deltaData[d].data
-            for(let p = 0; p < deltaData[d].size; p++) {
-                imgData.data[(pixel+p)*4+0] = pal[data[p]*4+2];
-                imgData.data[(pixel+p)*4+1] = pal[data[p]*4+1];
-                imgData.data[(pixel+p)*4+2] = pal[data[p]*4+0];
-                imgData.data[(pixel+p)*4+3] = 255 - pal[data[p]*4+3];
-            }
-
-            ptr += deltaData[d].size;
-        }
-
-        return {
-            imgData, 
-            pos: spritePos,
-            index: spriteIndex,
-        };
-    }
-
-    combineLayers(layers, width, height) {
-        const outImgData = new ImageData(width, height);
-
-        for(let l = 0; l < layers.length; l++) {
-            let layer = layers[l];
-            
-            for(let p = 0; p < layer.imgData.data.length/4; p++) {
-                let x = p % layer.width;
-                let y = ~~(p/layer.width);
-                let outX = layer.x + (x * (layer.flipX ? -1 : 1)) + (layer.flipX ? layer.width-1 : 0);
-                let outY = layer.y + (y * (layer.flipY ? -1 : 1)) + (layer.flipY ? layer.height-1 : 0);
-                let outP = outY*width+outX;
-
-                if(outX < 0 || outX >= width || outY < 0 || outY >= height) continue;
-                let data = layer.imgData.data;
-                if(data[p*4+3] == 0) continue;
-                if(data[p*4+0] + data[p*4+1] + data[p*4+2] == 0) continue;
-                outImgData.data[outP*4+0] = layer.imgData.data[p*4+0];
-                outImgData.data[outP*4+1] = layer.imgData.data[p*4+1];
-                outImgData.data[outP*4+2] = layer.imgData.data[p*4+2];
-                outImgData.data[outP*4+3] = layer.imgData.data[p*4+3];
-            }
-        }
-
-        return outImgData;
-    }
-
-    renderSprite(canvas, spriteID, remap = -1, x = 0, y = 0) {
-        const spriteIndex = this.sty.getSpriteIndex(spriteID);
-        canvas.width = spriteIndex.size[0];
-        canvas.height = spriteIndex.size[1];
-
-        const ctx = canvas.getContext('2d');
-        const spriteData = this.getSprite(spriteID, remap);
-
-        ctx.putImageData(spriteData.imgData, x, y);
-    }
-
-    renderSpritesList(canvas) {
-        canvas.height = 256;
-        canvas.width = this.sty.data['SPRG'].pages.length * 256;
-        let ctx = canvas.getContext('2d');
-
-        for(let s = 0; s < this.sty.getSpritesCount(); s++) {
-            const spriteData = this.getSprite(s);
-
-            ctx.putImageData(spriteData.imgData, spriteData.pos.absX, spriteData.pos.y);
-        }
-    }
-
-    getPointedSpriteID(canvas, e) {
-        let rect = canvas.getBoundingClientRect();
-
-        let mx = e.clientX - rect.left;
-        let my = e.clientY - rect.top;
-        return this.sty.getSpriteIDByPos(mx, my);
-    }
-
-    renderCarsList(canvas) {
-        let totalWidth = 0;
-        const carsInfo = this.sty.getAllCarsInfo();
-
-        carsInfo.forEach(carInfo=>{
-            totalWidth += carInfo.width + 16;
-        })
-
-        canvas.width = totalWidth;
-        canvas.height = 128;
-        let ctx = canvas.getContext('2d');
-        let currentX = 0;
-        let lastSpriteData;
-        let lastSpriteID = this.sty.getSpriteBase('car')-1;
-
-        for(let i = 0; i < carsInfo.length; i++) {
-            if(carsInfo[i].sprite) {
-                lastSpriteID++;
-                lastSpriteData = this.getCarSprite(lastSpriteID, -1, null, true, lastSpriteID, carsInfo[i].model);
-            }
-
-            let y = 0;
-            let x = currentX - (lastSpriteData.index.size[0] - carsInfo[i].width)/2
-            ctx.putImageData(lastSpriteData.imgData, x, y);
-            currentX += carsInfo[i].width + 16;
-        }
-    }
-
-    renderCarSel(canvas, carID, remap = -1, showTurret = false, showHitbox = false) {
-        let carSprite = this.getCarSprite(carID, remap, null, showTurret);
-    
-        canvas.width = carSprite.index.size[0];
-        canvas.height = carSprite.index.size[1];
-        let ctx = canvas.getContext('2d');
-
-        ctx.putImageData(carSprite.imgData, 0, 0);
-        
-        if(showHitbox) {
-            this.renderCarHitbox(canvas, carID);
-        }
-    }
-
-    getCarSprite(carID, remap = -1, deltaData, showTurret = false, customSpriteID = -1, customCarModel = -1) {
-        let carModel = (customCarModel+1) ? customCarModel : this.sty.getCarInfo(carID).model;
-        let carSpriteID = (customSpriteID+1) ? customSpriteID : this.sty.getCarSpriteID(carID);
-        let carSprite = this.getSprite(carSpriteID, remap);
-        let carHeight = carSprite.index.size[1];
-
-        if(!showTurret && !deltaData) return carSprite;
-
-        let layers = [
-            {
-                imgData: carSprite.imgData, 
-                x: 0, y: 0, 
-                width: carSprite.index.size[0], height: carSprite.index.size[1]
-            },
-        ];
-
-        if(deltaData) {
-            let deltaSprite = this.getSpriteDelta(carSpriteID, deltaData, remap);
-
-            layers.push({
-                imgData: deltaSprite.imgData,
-                x: 0, y: 0, 
-                width: carSprite.index.size[0], height: carSprite.index.size[1],
-            });
-        }
-        
-        if(showTurret) (() => {
-            let turretInfo = carTurrets[carModel];
-            if(!turretInfo) return;
-
-            let turretSpriteID = this.sty.getSpriteBase('code_obj') + turretInfo.objID;
-            let turretSprite = this.getSprite(turretSpriteID, -1, true);
-            if(!turretSprite) return;
-
-            let turretX = ~~(carSprite.index.size[0]/2 + turretInfo.xOff - turretSprite.index.size[0]/2);
-            let turretY = ~~(carSprite.index.size[1]/2 + turretInfo.yOff - turretSprite.index.size[1]/2);
-
-            if(turretY+turretSprite.index.size[1] > carHeight) carHeight = turretY+turretSprite.index.size[1];
-
-            layers.push({
-                imgData: turretSprite.imgData,
-                x: turretX, y: turretY, 
-                width: turretSprite.index.size[0], height: turretSprite.index.size[1], 
-                flipX: turretInfo.flip, flipY: turretInfo.flip
-            });
-        })();
-
-        if(layers.length == 1) return carSprite;
-
-        // overwrite
-        carSprite.imgData = this.combineLayers(layers, carSprite.index.size[0], carHeight);
-        carSprite.index.size[1] = carHeight;
-
-        return carSprite;
-    }
-
-    renderCarDeltas(canvas, carID, remap = -1, overlayMode = 0) {
-        let carSpriteID = this.sty.getCarSpriteID(carID);
-        let carDeltas = this.sty.getSpriteDeltas(carSpriteID);
-        let carSpriteSize = this.sty.getSpriteIndex(carSpriteID).size;
-
-        canvas.width = carSpriteSize[0] * carDeltas.length;
-        canvas.height = carSpriteSize[1];
-        if(carDeltas.length == 0) return;
-
-        let ctx = canvas.getContext('2d');
-        for(let i = 0; i < carDeltas.length; i++) {
-            let sprite;
-            if(overlayMode) {
-                sprite = this.getCarSprite(carID, remap, carDeltas[i], false, carSpriteID);
-            } else {
-                sprite = this.getSpriteDelta(carSpriteID, carDeltas[i], remap);
-            }
-            ctx.putImageData(sprite.imgData, i*carSpriteSize[0], 0);
-        }
-    }
-
-    renderCarHitbox(canvas, carID) {
-        const carInfo = this.sty.getCarInfo(carID);
-        const carSpriteID = this.sty.getCarSpriteID(carID);
-        const carSpriteIndex = this.sty.getSpriteIndex(carSpriteID);
-
-        let ctx = canvas.getContext('2d');
-        ctx.lineWidth = 1;
-        let cx = ~~(carSpriteIndex.size[0]/2);
-        let cy = ~~(carSpriteIndex.size[1]/2);
-        let corx = ~~(cx-carInfo.width/2)+.5;
-        let cory = ~~(cy-carInfo.height/2)+.5;
-
-        ctx.strokeStyle = '#f88';
-        ctx.strokeRect(corx, cy+carInfo.rear_wheel_offset+.5, carInfo.width-1, carInfo.front_wheel_offset-carInfo.rear_wheel_offset-1);
-        ctx.strokeStyle = '#88f';
-        ctx.strokeRect(corx, cy+carInfo.rear_window_offset+.5, carInfo.width-1, carInfo.front_window_offset-carInfo.rear_window_offset-1);
-        ctx.strokeStyle = '#fff';
-        ctx.strokeRect(corx, cory, carInfo.width-1, carInfo.height-1);
-    }
-
-    getPointedCarID(canvas, e) {
-        let rect = canvas.getBoundingClientRect();
-        let mx = e.clientX - rect.left;
-
-        const carsInfo = this.sty.getAllCarsInfo();
-
-        let sumx = 0;
-        for(let i = 0; i < carsInfo.length; i++) {
-            sumx += carsInfo[i].width + 16;
-            if(sumx > mx) return i;
-        }
-    }
-
-    renderFontCharList(canvas, fontBase, fontSize) {
-        let fontSpriteBase = this.sty.getSpriteBase('font') + fontBase;
+    renderFontCharList(canvas, font) {
+        let fontSize = font.sprites.length;
         let totalWidth = 0;
         let maxHeight = 0;
 
         for(let i = 0; i < fontSize; i++) {
-            let charSpriteID = fontSpriteBase + i;
-            let charSpriteIndex = this.sty.getSpriteIndex(charSpriteID);
-            totalWidth += charSpriteIndex.size[0];
-            maxHeight = Math.max(maxHeight, charSpriteIndex.size[1]);
+            let bitmap = font.sprites[i].bitmap;
+            totalWidth += bitmap.width;
+            maxHeight = Math.max(maxHeight, bitmap.height);
         }
 
         canvas.width = totalWidth;
         canvas.height = maxHeight;
         let ctx = canvas.getContext('2d');
 
-        let currentX = 0;
+        let x = 0;
         for(let i = 0; i < fontSize; i++) {
-            let charSpriteID = fontSpriteBase + i;
-            let charSprite = this.getSprite(charSpriteID, -1);
-            ctx.putImageData(charSprite.imgData, currentX, 0);
-            currentX += charSprite.index.size[0];
+            let bitmap = font.sprites[i].bitmap;
+            ctx.putImageData(bitmap.getImgData(), x, 0);
+            x += bitmap.width;
         }
     }
 }
