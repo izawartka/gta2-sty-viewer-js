@@ -68,7 +68,7 @@ export class PalPage {
     showColorDetails(colorPos) {
         if(!this.selectedPalette) return;
         this.renderer.renderPaletteSel(this.elements.selppalcanv, this.selectedPalette, colorPos);
-        let color = this.selectedPalette.getRGBAColor(colorPos);
+        let color = this.selectedPalette.getColor(colorPos);
         this.elements.selppalmove.innerHTML = 
             `<b>Index:</b> ${colorPos} / 
             <b>Color:</b> rgba(${color.join(', ')}) / 

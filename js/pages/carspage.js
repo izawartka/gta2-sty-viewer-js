@@ -81,7 +81,7 @@ export class CarsPage {
         let remapsHTML = `<b>Remaps:</b><br><div class="wrapedlist">`;
         let remaps = this.selectedCar.remaps;
         remaps.forEach(remap => {
-            let color = remap.physicalPalette.getRGBAColor(80).join(', ');
+            let color = remap.physicalPalette.getColor(80).join(', ');
             remapsHTML += `<div class="remap" id="remap_${remap.relID}"><div class="remapsq" style="background-color: rgb(${color});"></div>${remap.relID}</div>`;
         });
         remapsHTML += '<div class="remap" id="remap_clear"><div class="remapsq remapcl"></div>clear</div></div>';

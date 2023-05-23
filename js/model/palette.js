@@ -10,8 +10,12 @@ export class OMPalette {
         return this.data.slice(i*4, i*4+4);
     }
 
-    getRGBAColor(i) {
-        let color = this.getColor(i);
-        return [color[2], color[1], color[0], 255-color[3]];
+    getBGRAData() {
+        let data = [];
+        for(let i = 0; i < 256; i++) {
+            let color = this.getColor(i);
+            data.push(color[2], color[1], color[0], color[3]);
+        }
+        return data;
     }
 }
