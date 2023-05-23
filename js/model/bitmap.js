@@ -16,10 +16,10 @@ export class OMBitmap {
                 imgData.data[i*4+3] = 0;
                 continue;
             }
-            imgData.data[i*4] = pixel[2];
+            imgData.data[i*4] = pixel[0];
             imgData.data[i*4+1] = pixel[1];
-            imgData.data[i*4+2] = pixel[0];
-            imgData.data[i*4+3] = 255-pixel[3];
+            imgData.data[i*4+2] = pixel[2];
+            imgData.data[i*4+3] = pixel[3];
         }
         return imgData;
     }

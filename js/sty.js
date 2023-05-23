@@ -72,6 +72,11 @@ export class STY {
         let palData = this.readPagedContent(PPAL, 256, 256, 4, 256);
         
         return palData.map((data) => {
+            for(let i = 0; i < 256; i++) {
+                [data.data[i*4], data.data[i*4+2]] = [data.data[i*4+2], data.data[i*4]];
+                data.data[i*4+3] = 255-data.data[i*4+3];
+            }
+
             return new OMPalette(
                 data.pageID,
                 data.relID,

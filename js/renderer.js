@@ -284,11 +284,8 @@ export class Renderer {
         for(let i = 0; i < palettesCount; i++) {
             let pal = this.sty.data.palettes[i].data;
             let imgData = ctx.createImageData(1, 256);
-            for(let p = 0; p < 256*4; p+=4) {
-                imgData.data[p+0] = pal[p+2];
-                imgData.data[p+1] = pal[p+1];
-                imgData.data[p+2] = pal[p+0];
-                imgData.data[p+3] = 255-pal[p+3];
+            for(let p = 0; p < 256*4; p++) {
+                imgData.data[p] = pal[p];
             }
             for(let j = 0; j < xScale; j++)
                 ctx.putImageData(imgData, i*xScale+j, 0);
@@ -302,7 +299,7 @@ export class Renderer {
         const ctx = canvas.getContext('2d');
 
         for(let p = 0; p < 256; p++) {
-            let pixel = palette.getRGBAColor(p);
+            let pixel = palette.getColor(p);
             ctx.fillStyle = `rgba(${pixel.join(', ')})`;
             ctx.fillRect(p*scale, 0, scale, canvas.height);
         }

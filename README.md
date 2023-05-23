@@ -5,10 +5,12 @@ A web viewer for GTA2 graphics files (.sty) written from scratch in pure JS. Fea
 - Full support for these weird GTA2 virtual and physical palettes
 - Tiles viewer
     - Info about selected tile
+    - Exporting selected tile to an indexed-color BMP file
 - Sprites viewer
     - Detailed info about selected sprite
     - Previewing remaps
     - Searching sprites by their base and ID
+    - Exporting selected sprite to an indexed-color BMP file
 - Info about sprite bases (sprites count)
 - Cars viewer
     - Info about selected car's hitboxes, flags, traffic info, doors, etc.
@@ -23,7 +25,7 @@ A web viewer for GTA2 graphics files (.sty) written from scratch in pure JS. Fea
 
 ## To do
 - Editor
-- Exporing tiles/sprites/palettes
+- Exporing palettes
 - Virtual palettes list maybe?
 - ...
 
