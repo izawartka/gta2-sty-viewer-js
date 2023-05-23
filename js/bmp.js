@@ -25,7 +25,7 @@ export const BMP = {
 
         const palette = new Uint8Array(bitmap.virtualPalette.physicalPalette.getBGRAData());
         
-        const lineMargin = new Array(bitmap.width % 4).fill(0);
+        const lineMargin = new Array(3 - ((bitmap.width+3) % 4)).fill(0);
         let pixelLines = [];
         for(let y = bitmap.height-1; y >= 0; y--) {
             let line = [];
