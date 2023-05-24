@@ -26,7 +26,8 @@ export class SpritesPage {
             <b>Height:</b> ${sprite.bitmap.height} px<br>
             <b>Virtual palette:</b> sprite/${virtPal.relID}<br>
             <b>Physical palette:</b> <input type="number" id="selspriteremap" value="${virtPal.physicalPalette.id}"><br><br>
-            <button id="selspritesave">Download as BMP</button>`;
+            <button id="selspritesave">Download BMP</button><br>
+            <button id="selspriteopen">Upload BMP</button>`;
 
         this.elements.selspriteinfo.innerHTML = infoHTML;
 
@@ -39,6 +40,10 @@ export class SpritesPage {
 
         document.getElementById('selspritesave').onclick = () => {
             BMP.save(sprite.bitmap, `sprite_${sprite.base}_${sprite.relID}.bmp`);
+        }
+
+        document.getElementById('selspriteopen').onclick = () => {
+            BMP.open();
         }
     }
 

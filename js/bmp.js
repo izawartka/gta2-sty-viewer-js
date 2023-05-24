@@ -1,5 +1,9 @@
+import { OMBitmap } from "./model/bitmap.js";
+import { OMPalette } from "./model/palette.js";
+
 export const BMP = {
-    save: (bitmap, filename) => {
+
+    create: (bitmap) => {
         const headersLength = 14 + 40;
         const pixelDataLength = bitmap.data.length;
         const paletteLength = bitmap.virtualPalette.physicalPalette.data.length;
@@ -34,10 +38,52 @@ export const BMP = {
         }
         const pixelData = new Uint8Array(pixelLines);
 
-        const file = new Blob([header, palette, pixelData], {type: 'image/bmp'});
+        return new Blob([header, palette, pixelData], {type: 'image/bmp'});
+    },
+
+    parse: (file) => {
+        if (file.byteLength < 54 + 1024) return;
+        if(new Uint16Array(file.slice(0, 2))[0] != 19778) return;
+        const [dibHeaderSize, width, height, planesAndBits, compression] = Array.from(new Uint32Array(file.slice(14, 14 + 20)));
+        if(dibHeaderSize != 40) return;
+        if(planesAndBits != 524289) return; // 1 plane, 8 bits per pixel
+        if(compression != 0) return;
+
+        const paletteData = Array.from(new Uint8Array(file.slice(54, 54 + 1024)));
+        
+        const pixelLines = Array.from(new Uint8Array(file.slice(54 + 1024)));
+        const lineMarginSize = 3 - ((width+3) % 4);
+        let pixelData = [];
+        for(let y = height-1; y >= 0; y--) {
+            let line = pixelLines.slice(y*(width+lineMarginSize), (y+1)*(width+lineMarginSize)-lineMarginSize);
+            pixelData.push(...line);
+        }
+
+        return [paletteData, pixelData, width, height];
+    },
+
+    save: (bitmap, filename) => {
+        const file = BMP.create(bitmap);
         const a = document.createElement('a');
         a.href = URL.createObjectURL(file);
         a.download = filename;
         a.click();
+    },
+
+    open: () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/bmp';
+        input.onchange = e => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = e => {
+                console.log(e);
+                const bitmap = BMP.parse(e.target.result);
+                console.log(bitmap);
+            }
+            reader.readAsArrayBuffer(file);
+        }
+        input.click();
     }
 }

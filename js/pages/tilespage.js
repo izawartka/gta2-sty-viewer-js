@@ -20,7 +20,8 @@ export class TilesPage {
             <b>Virtual palette:</b> tile/${virtPal.relID}<br>
             <b>Physical palette:</b> <input type="number" id="seltileremap" value="${virtPal.physicalPalette.id}"><br>
             <b>Material:</b> ${materialNames[tile.material] || ''}<br><br>
-            <button id="seltilesave">Download as BMP</button>`;
+            <button id="seltilesave">Download BMP</button><br>
+            <button id="seltileopen">Upload BMP</button>`;
 
         this.elements.seltileinfo.innerHTML = infoHTML;
 
@@ -33,6 +34,10 @@ export class TilesPage {
 
         document.getElementById('seltilesave').onclick = () => {
             BMP.save(tile.bitmap, `tile_${tileID}.bmp`);
+        }
+
+        document.getElementById('seltileopen').onclick = () => {
+            BMP.open();
         }
     }
 

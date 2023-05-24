@@ -1,9 +1,14 @@
 export class OMPalette {
-    constructor(pageID, relID, data) {
-        this.data = data;
+    constructor(pageID, relID, bgraData) {
         this.pageID = pageID;
         this.relID = relID;
         this.id = pageID*64 + relID;
+
+        this.data = [];
+        for(let i = 0; i < 256; i++) {
+            let bgraColor = bgraData.slice(i*4, i*4+4);
+            this.data.push(bgraColor[2], bgraColor[1], bgraColor[0], 255 - bgraColor[3]);
+        }
     }
 
     getColor(i) {
@@ -13,8 +18,8 @@ export class OMPalette {
     getBGRAData() {
         let data = [];
         for(let i = 0; i < 256; i++) {
-            let color = this.getColor(i);
-            data.push(color[2], color[1], color[0], color[3]);
+            let rgbaColor = this.getColor(i);
+            data.push(rgbaColor[2], rgbaColor[1], rgbaColor[0], 255 - rgbaColor[3]);
         }
         return data;
     }
