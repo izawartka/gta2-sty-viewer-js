@@ -26,7 +26,7 @@
         <label for="filesrc_ex">Example (bil.sty)</label><br>
         <input type="radio" id="filesrc_up" name="filesrc" value="up">
         <label for="filesrc_up">Upload file</label>
-        <input type="file" name="file" id="file"><br><br>
+        <input type="file" name="file" id="file" accept=".sty"><br><br>
         <button id="fileapply">OK</button><br>
         <span id="filestatus"></span>
     </div>
@@ -135,6 +135,10 @@
             </div><br>
             <span id="fontsmove">&nbsp;</span><br>
         </fieldset>
+    </div>
+    <div id="prompt">
+        <div id="promptbox">
+        </div>
     </div>
 </body>
 </html>

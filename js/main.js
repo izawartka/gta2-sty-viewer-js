@@ -7,6 +7,8 @@ import { SpritesPage } from './pages/spritespage.js';
 import { PalPage } from './pages/palpage.js';
 import { CarsPage } from './pages/carspage.js';
 import { FontsPage } from './pages/fontspage.js';
+import { Prompt } from './prompt.js';
+import { BMP } from './bmp.js';
 
 let elements = {};
 
@@ -55,10 +57,12 @@ class Main {
                 this.sty = new STY(data);
                 if(!this.sty.isFileCorrect()) {
                     this.log('Error while reading: Incorrect file');
+                    Prompt.notice('Error while reading: Incorrect file');
                     this.busy = false;
                     return;
                 }
                 this.log('Rendering...');
+                this.createUI();
                 this.render()
                     .then(()=>{
                         this.log('Done!');
@@ -68,6 +72,7 @@ class Main {
                     });
             }, (error)=>{
                 this.log('Error while uploading: ' + error);
+                Prompt.notice('Error while uploading: ' + error);
                 this.busy = false;
             });
     }
@@ -92,20 +97,28 @@ class Main {
         });
     }
 
+    createUI() {
+        this.renderer = new Renderer(this.sty);
+        this.tilesPage = new TilesPage(this.elements, this.sty, this.renderer);
+        this.spritesPage = new SpritesPage(this.elements, this.sty, this.renderer);
+        this.carsPage = new CarsPage(this.elements, this.sty, this.renderer, this.tabs);
+        this.carsPage.addSpritesPageReference((baseName, spriteID) => {
+            this.tabs.showTab('sprites');
+            this.spritesPage.goToSprite(baseName, spriteID);
+        });
+        this.ppalPage = new PalPage(this.elements, this.sty, this.renderer);
+        this.fontsPage = new FontsPage(this.elements, this.sty, this.renderer);
+        BMP.addRefrences(this.render.bind(this), this.sty.getPaletteUsage.bind(this.sty));
+    }
+
     render() {
         return new Promise((resolve, reject) => {
-            this.renderer = new Renderer(this.sty);
-
-            this.tilesPage = new TilesPage(this.elements, this.sty, this.renderer);
-            this.spritesPage = new SpritesPage(this.elements, this.sty, this.renderer);
-            this.carsPage = new CarsPage(this.elements, this.sty, this.renderer, this.tabs);
-            this.carsPage.addSpritesPageReference((baseName, spriteID) => {
-                this.tabs.showTab('sprites');
-                this.spritesPage.goToSprite(baseName, spriteID);
-            });
-            this.ppalPage = new PalPage(this.elements, this.sty, this.renderer);
-            this.fontsPage = new FontsPage(this.elements, this.sty, this.renderer);
-            resolve();    
+            this.tilesPage.render();
+            this.spritesPage.render();
+            this.carsPage.render();
+            this.ppalPage.render();
+            this.fontsPage.render();
+            resolve();
         });
     }
 }

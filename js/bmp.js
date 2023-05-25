@@ -1,5 +1,4 @@
-import { OMBitmap } from "./model/bitmap.js";
-import { OMPalette } from "./model/palette.js";
+import { Prompt } from './prompt.js';
 
 export const BMP = {
 
@@ -70,17 +69,73 @@ export const BMP = {
         a.click();
     },
 
-    open: () => {
+    addRefrences: (reRenderFn, checkPalUsageFn) => {
+        BMP.reRenderFn = reRenderFn;
+        BMP.checkPalUsageFn = checkPalUsageFn;
+        BMP.referencesAdded = true;
+    },
+
+    open: (targetBitmap, forceSameSize = false) => {
+        if(!BMP.referencesAdded) console.warn('BMP references not added. Call BMP.addRefrences() first.');
+
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = 'image/bmp';
         input.onchange = e => {
             const file = e.target.files[0];
             const reader = new FileReader();
-            reader.onload = e => {
-                console.log(e);
-                const bitmap = BMP.parse(e.target.result);
-                console.log(bitmap);
+            reader.onload = async (e) => {
+                const result = BMP.parse(e.target.result);
+                if(!result) {
+                    Prompt.notice('Invalid BMP file');
+                    return;
+                }
+                const [paletteData, pixelData, width, height] = result;
+                let sameSize = width == targetBitmap.width && height == targetBitmap.height;
+                if(forceSameSize && !sameSize) {
+                    Prompt.notice(`BMP file must be ${targetBitmap.width} x ${targetBitmap.height} px`);
+                    return;
+                }
+
+                const targetPalBGRA = targetBitmap.virtualPalette.physicalPalette.getBGRAData();
+                let samePalette = paletteData.every((v, i) => v == targetPalBGRA[i]);
+                let importBitmap = samePalette;
+                let importPalette = false;
+
+                if(!samePalette) {
+                    let paletteChoice = await Prompt.prompt('Palette from the BMP file is different from the current palette. What do you want to do?', [
+                        'Replace existing palette with the BMP file\'s palette',
+                        'Use existing palette (ignore BMP file\'s palette)',
+                        'Import BMP file\'s palette as new palette',
+                    ]);
+
+                    switch(paletteChoice) {
+                        case 0:
+                            let usage = BMP.checkPalUsageFn(targetBitmap.virtualPalette.physicalPalette);
+                            let usageCount = Object.values(usage).reduce((a, b) => a + b.length, 0);
+                            console.log(usageCount)
+                            if(usageCount > 1) {
+                                if(await Prompt.confirm(`This palette is shared with ${usageCount-1} other tiles/sprites. Replacing it will break them`) == false)
+                                    break;
+                            }
+                            importBitmap = true;
+                            importPalette = true;
+                            break;
+                        case 1:
+                            if(!await Prompt.confirm(`Imported tile/sprite will look different from the BMP file.`)) break;
+                            importBitmap = true;
+                            break;
+                        case 2:
+                            break;
+                    }
+                }
+
+                if(importPalette)
+                    targetBitmap.virtualPalette.physicalPalette.setData(paletteData);
+                if(importBitmap) {
+                    targetBitmap.data = pixelData;
+                    BMP.reRenderFn();
+                }
             }
             reader.readAsArrayBuffer(file);
         }

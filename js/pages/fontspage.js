@@ -1,7 +1,6 @@
 export class FontsPage {
     constructor(elements, sty, renderer) {
         Object.assign(this, {elements, sty, renderer});
-        this.render();
     }
 
     render() {

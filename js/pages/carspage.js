@@ -6,9 +6,8 @@ export class CarsPage {
         this.showCarHitbox = false;
         this.showCarTurret = true;
         this.selectedRemap = null;
-        this.selectedCar = null;
+        this.selectedCar = this.sty.data.cars[0];
         this.onSpriteView = () => {};
-        this.render();
     }
 
     renderSelCanvas() {
@@ -131,8 +130,9 @@ export class CarsPage {
     }
 
     select(car) {
-        this.elements.cardeltasmove.innerHTML = '';
+        if(!car) return;
         this.selectedCar = car;
+        this.elements.cardeltasmove.innerHTML = '';
         this.selectedRemap = null;
         this.renderCarInfo();
         this.renderCarFlagsInfo();
@@ -162,6 +162,6 @@ export class CarsPage {
         this.elements.cardeltasmode_o.oninput = this.renderCarDeltasInfo.bind(this);
         this.elements.cardeltasmode_d.oninput = this.renderCarDeltasInfo.bind(this);
 
-        this.select(this.sty.data.cars[0]);
+        this.select(this.selectedCar);
     }
 }

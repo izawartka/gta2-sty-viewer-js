@@ -5,11 +5,12 @@ import { BMP } from "../bmp.js";
 export class SpritesPage {
     constructor(elements, sty, renderer) {
         Object.assign(this, {elements, sty, renderer});
-        this.render();
+        this.selectedSprite = Object.values(this.sty.data.sprites)[0][0];
     }
 
     select(sprite) {
         if(!sprite) return;
+        this.selectedSprite = sprite;
         this.elements.gotosprite.value = sprite.relID;
         this.elements.gotospritebase.value = sprite.base;
         this.renderer.renderBitmap(this.elements.selspritecanv, sprite.bitmap);
@@ -43,7 +44,7 @@ export class SpritesPage {
         }
 
         document.getElementById('selspriteopen').onclick = () => {
-            BMP.open();
+            BMP.open(sprite.bitmap, true);
         }
     }
 
@@ -70,6 +71,7 @@ export class SpritesPage {
         for(let i = 0; i < spriteBases.length; i++) {
             let baseName = spriteBases[i];
             let base = this.sty.data.sprites[baseName];
+            if(!base) continue;
 
             basesHTML += `<div class="bordered"><b>${baseName}</b>: ${base.length}</div>`;
             optionsHTML += `<option>${baseName}</option>`;
@@ -95,7 +97,7 @@ export class SpritesPage {
             let sprite = this.renderer.getPointedSprite(spritesCanv, e);
             this.select(sprite);
         }
-        this.select(Object.values(this.sty.data.sprites)[0][0]);
+        this.select(this.selectedSprite);
 
         this.elements.gotosprite.oninput = this.onGoToSprite.bind(this);
         this.elements.gotospritebase.onchange = this.onGoToSprite.bind(this);

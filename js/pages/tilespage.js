@@ -5,11 +5,13 @@ import { BMP } from "../bmp.js";
 export class TilesPage {
     constructor(elements, sty, renderer) {
         Object.assign(this, {elements, sty, renderer});
-        this.render();
+        this.selectedTileID = 0;
     }
 
     select(tileID) {
         let tile = this.sty.data.tiles[tileID];
+        if(!tile) return;
+        this.selectedTileID = tileID;
         let virtPal = tile.bitmap.virtualPalette;
         this.renderer.renderBitmap(this.elements.seltilecanv, tile.bitmap);
 
@@ -37,7 +39,7 @@ export class TilesPage {
         }
 
         document.getElementById('seltileopen').onclick = () => {
-            BMP.open();
+            BMP.open(tile.bitmap, true);
         }
     }
 
@@ -52,6 +54,6 @@ export class TilesPage {
             let tileID = this.renderer.getPointedTileID(tilesCanv, e);
             this.select(tileID);
         };
-        this.select(0);
+        this.select(this.selectedTileID);
     }
 }

@@ -104,7 +104,9 @@ export class STY {
     }
 
     parseMaterials(tiles) {
-        let data = new Uint16Array(this.chunks['SPEC']);
+        let SPEC = this.chunks['SPEC'];
+        if(!SPEC) return;
+        let data = new Uint16Array(SPEC);
 
         let material = 0;
         for(let i = 0; i < data.length; i++) {
@@ -117,8 +119,9 @@ export class STY {
         }
     }
 
-    parseTiles(virtualPalettes, materials) {
+    parseTiles(virtualPalettes) {
         let TILE = this.chunks['TILE'];
+        if(!TILE) return [];
         let tilesData = this.readPagedContent(TILE, 256, 256, 64, 64);
 
         return tilesData.map((data, id) => {
@@ -134,6 +137,7 @@ export class STY {
 
     parseSpritePages() {
         let SPRG = this.chunks['SPRG'];
+        if(!SPRG) return [];
         let pages = [];
 
         for(let i = 0; i < SPRG.byteLength; i+=256*256) {
@@ -146,6 +150,7 @@ export class STY {
 
     parseSpriteIndexes() {
         let SPRX = this.chunks['SPRX'];
+        if(!SPRX) return [];
         let indexes = [];
 
         for(let i = 0; i < ~~(SPRX.byteLength/8); i++) {
@@ -166,6 +171,7 @@ export class STY {
 
     parseSprites(spritePages, spriteIndexes, virtualPalettes) {
         let SPRB = this.chunks['SPRB'];
+        if(!SPRB) return [];
         let bases = new Uint16Array(SPRB);
 
         let sprites = {};
@@ -188,6 +194,7 @@ export class STY {
     parseCarDeltas(sprites) {
         let DELX = this.chunks['DELX'];
         let DELS = this.chunks['DELS'];
+        if(!DELX || !DELS) return;
 
         let b = 0;
         let sb = 0;
@@ -222,6 +229,7 @@ export class STY {
 
     parseCars(sprites, virtualPalettes) {
         let CARI = this.chunks['CARI'];
+        if(!CARI) return [];
 
         let cars = [];
         let b = 0;
@@ -287,6 +295,7 @@ export class STY {
 
     parseRecycling(cars) {
         let RECY = this.chunks['RECY'];
+        if(!RECY) return;
         let recyclingInfo = Array.from(new Uint8Array(RECY));
         let carsByModel = [];
         cars.forEach((car) => {
@@ -300,6 +309,7 @@ export class STY {
 
     parseFonts(sprites) {
         let FONB = this.chunks['FONB'];
+        if(!FONB) return [];
         let bases = Array.from(new Uint16Array(FONB)).slice(1);
         let fonts = [];
 

@@ -4,15 +4,13 @@ import { options, paletteBases } from "../constants.js"
 export class PalPage {
     constructor(elements, sty, renderer) {
         Object.assign(this, {elements, sty, renderer});
-        this.selectedPaletteID = -1;
-        this.render();
+        this.selectedPalette = this.sty.data.palettes[0];
     }
 
-    select(paletteID) {
-        let palette = this.sty.data.palettes[paletteID];
+    select(palette) {
         if(!palette) return;
-
         this.selectedPalette = palette;
+
         this.elements.selppalmove.innerHTML = '&nbsp;';
         this.renderer.renderPaletteSel(this.elements.selppalcanv, palette);
 
@@ -34,6 +32,7 @@ export class PalPage {
         for(let i = 0; i < paletteBases.length; i++) {
             let baseName = paletteBases[i];
             let base = this.sty.data.virtualPalettes[baseName];
+            if(!base) continue;
 
             basesHTML += `<div class="bordered"><b>${baseName}</b>: ${base.length}</div>`;
         }
@@ -52,7 +51,8 @@ export class PalPage {
 
         ppalsCanv.onclick = (e) => {
             let ppalID = this.renderer.getPointedFromX(ppalsCanv, e, options.palettesListScale);
-            this.select(ppalID);
+            let palette = this.sty.data.palettes[ppalID];
+            this.select(palette);
         }
 
         let selPpalCanv = this.elements.selppalcanv;
@@ -61,7 +61,7 @@ export class PalPage {
             this.showColorDetails(colorPos);
         };
 
-        this.select(0);
+        this.select(this.selectedPalette);
         this.renderBasesList();
     }
 

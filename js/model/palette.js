@@ -4,6 +4,10 @@ export class OMPalette {
         this.relID = relID;
         this.id = pageID*64 + relID;
 
+        this.setData(bgraData);
+    }
+
+    setData(bgraData) {
         this.data = [];
         for(let i = 0; i < 256; i++) {
             let bgraColor = bgraData.slice(i*4, i*4+4);
