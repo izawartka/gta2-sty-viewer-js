@@ -1,4 +1,4 @@
-import { Prompt } from './prompt.js';
+import { Prompt, PromptPaletteModes } from './prompt.js';
 
 export const BMP = {
 
@@ -69,9 +69,10 @@ export const BMP = {
         a.click();
     },
 
-    addRefrences: (reRenderFn, checkPalUsageFn) => {
+    addRefrences: (reRenderFn, styObj, rendererObj) => {
         BMP.reRenderFn = reRenderFn;
-        BMP.checkPalUsageFn = checkPalUsageFn;
+        BMP.styObj = styObj;
+        BMP.rendererObj = rendererObj;
         BMP.referencesAdded = true;
     },
 
@@ -100,38 +101,56 @@ export const BMP = {
                 const targetPalBGRA = targetBitmap.virtualPalette.physicalPalette.getBGRAData();
                 let samePalette = paletteData.every((v, i) => v == targetPalBGRA[i]);
                 let importBitmap = samePalette;
-                let importPalette = false;
+                let targetPalette = null;
+                let choiceDone = false;
 
-                if(!samePalette) {
-                    let paletteChoice = await Prompt.prompt('Palette from the BMP file is different from the current palette. What do you want to do?', [
+                while(!samePalette && !choiceDone) {
+                    let paletteChoice = await Prompt.prompt('Palette from this BMP file is different from the current palette. What do you want to do?', [
                         'Replace existing palette with the BMP file\'s palette',
                         'Use existing palette (ignore BMP file\'s palette)',
                         'Import BMP file\'s palette as new palette',
+                        'Cancel',
                     ]);
 
                     switch(paletteChoice) {
                         case 0:
-                            let usage = BMP.checkPalUsageFn(targetBitmap.virtualPalette.physicalPalette);
-                            let usageCount = Object.values(usage).reduce((a, b) => a + b.length, 0);
-                            console.log(usageCount)
-                            if(usageCount > 1) {
-                                if(await Prompt.confirm(`This palette is shared with ${usageCount-1} other tiles/sprites. Replacing it will break them`) == false)
-                                    break;
-                            }
                             importBitmap = true;
-                            importPalette = true;
+                            targetPalette = targetBitmap.virtualPalette.physicalPalette;
+                            choiceDone = true;
                             break;
                         case 1:
                             if(!await Prompt.confirm(`Imported tile/sprite will look different from the BMP file.`)) break;
                             importBitmap = true;
+                            choiceDone = true;
                             break;
                         case 2:
+                            let targetPaletteID = await Prompt.palette('Select destination palette', BMP.rendererObj, PromptPaletteModes.Empty | PromptPaletteModes.Unused);
+                            if(targetPaletteID == -1) break;
+                            targetPalette = BMP.styObj.data.palettes[targetPaletteID];
+                            importBitmap = true;
+                            choiceDone = true;
                             break;
+                        case 3:
+                            choiceDone = true;
+                            break;
+                    }
+
+                    if(!targetPalette) continue;
+                    let usage = BMP.styObj.getPaletteUsage(targetPalette);
+                    let usageCount = Object.values(usage).reduce((a, b) => a + b.length, 0);
+                    if(targetPalette == targetBitmap.virtualPalette.physicalPalette) usageCount--;
+                    if(usageCount == 0) continue;
+                    if(await Prompt.confirm(`This palette is shared with ${usageCount} other tiles/sprites. Replacing it will break them`) == false) {
+                        targetPalette = null;
+                        importBitmap = false;
+                        choiceDone = false;
                     }
                 }
 
-                if(importPalette)
-                    targetBitmap.virtualPalette.physicalPalette.setData(paletteData);
+                if(targetPalette) {
+                    targetPalette.setData(paletteData);
+                    targetBitmap.virtualPalette.physicalPalette = targetPalette;
+                }
                 if(importBitmap) {
                     targetBitmap.data = pixelData;
                     BMP.reRenderFn();

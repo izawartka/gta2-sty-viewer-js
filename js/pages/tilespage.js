@@ -31,7 +31,9 @@ export class TilesPage {
         remapInput.oninput = (e) => {   
             let paletteID = Helper.loopValue(0, this.sty.data.palettes.length - 1, e.target.value);
             let palette = this.sty.data.palettes[paletteID];
-            this.renderer.renderBitmap(this.elements.seltilecanv, tile.bitmap, palette);
+            if(!palette) return;
+            tile.bitmap.virtualPalette.physicalPalette = palette;
+            this.renderer.renderBitmap(this.elements.seltilecanv, tile.bitmap);
         }
 
         document.getElementById('seltilesave').onclick = () => {

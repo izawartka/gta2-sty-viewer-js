@@ -108,11 +108,12 @@ class Main {
         });
         this.ppalPage = new PalPage(this.elements, this.sty, this.renderer);
         this.fontsPage = new FontsPage(this.elements, this.sty, this.renderer);
-        BMP.addRefrences(this.render.bind(this), this.sty.getPaletteUsage.bind(this.sty));
+        BMP.addRefrences(this.render.bind(this), this.sty, this.renderer);
     }
 
     render() {
         return new Promise((resolve, reject) => {
+            this.renderer.cachedPalCanv = null;
             this.tilesPage.render();
             this.spritesPage.render();
             this.carsPage.render();

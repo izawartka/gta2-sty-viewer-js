@@ -148,5 +148,7 @@ export const options = {
     carsListMargin: 16,
     deltasListMargin: 0,
     palettesListScale: 4,
+    palettesListUsedSize: 8,
+    palettesListUsedColor: '#ff0000',
     paletteSelScale: 4,
 };

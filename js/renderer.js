@@ -3,7 +3,7 @@ import { carTurrets, options } from "./constants.js";
 export class Renderer {
     constructor(sty) {
         this.sty = sty;
-        this.cachedPalCanv = undefined;
+        this.cachedPalCanv = null;
     }
 
     renderBitmap(canvas, bitmap, customPalette = null) {
@@ -277,7 +277,7 @@ export class Renderer {
         let palettesCount = this.sty.data.palettes.length;
         let xScale = options.palettesListScale;
         this.cachedPalCanv = document.createElement('canvas');
-        this.cachedPalCanv.height = 256;
+        this.cachedPalCanv.height = 256 + options.palettesListUsedSize;
         this.cachedPalCanv.width = palettesCount * xScale;
         let ctx = this.cachedPalCanv.getContext('2d');
         
@@ -288,7 +288,12 @@ export class Renderer {
                 imgData.data[p] = pal[p];
             }
             for(let j = 0; j < xScale; j++)
-                ctx.putImageData(imgData, i*xScale+j, 0);
+                ctx.putImageData(imgData, i*xScale+j, options.palettesListUsedSize);
+
+            let palUsage = this.sty.getPaletteUsage(this.sty.data.palettes[i]);
+            if(Object.values(palUsage).length == 0) continue;
+            ctx.fillStyle = options.palettesListUsedColor;
+            ctx.fillRect(i*xScale, 0, xScale, options.palettesListUsedSize);
         }
     }
 
