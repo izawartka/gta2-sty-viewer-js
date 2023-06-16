@@ -94,6 +94,7 @@ export class STY {
                 relID,
                 physicalPalettes[value]
             );
+            physicalPalettes[value].addUsage(vPal);
 
             if(!vPals[baseName]) vPals[baseName] = [];
             vPals[baseName][relID] = vPal;
@@ -384,20 +385,5 @@ export class STY {
     getSpritesAsArray() {
         return Object.values(this.data.sprites)
             .reduce((acc, val) => acc.concat(val), []);
-    }
-
-    getPaletteUsage(palette) {
-        let usage = {};
-
-        for (const [baseName, vPals] of Object.entries(this.data.virtualPalettes)) {
-            let vPalsCount = vPals.length;
-            for(let i = 0; i < vPalsCount; i++) {
-                if(vPals[i].physicalPalette != palette) continue;
-                if(!usage[baseName]) usage[baseName] = [];
-                usage[baseName].push(i);
-            }
-        }
-
-        return usage;
     }
 }

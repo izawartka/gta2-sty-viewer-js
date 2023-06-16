@@ -136,8 +136,7 @@ export const BMP = {
                     }
 
                     if(!targetPalette) continue;
-                    let usage = BMP.styObj.getPaletteUsage(targetPalette);
-                    let usageCount = Object.values(usage).reduce((a, b) => a + b.length, 0);
+                    let usageCount = targetPalette.usedBy.length;
                     if(targetPalette == targetBitmap.virtualPalette.physicalPalette) usageCount--;
                     if(usageCount == 0) continue;
                     if(await Prompt.confirm(`This palette is shared with ${usageCount} other tiles/sprites. Replacing it will break them`) == false) {
@@ -149,7 +148,7 @@ export const BMP = {
 
                 if(targetPalette) {
                     targetPalette.setData(paletteData);
-                    targetBitmap.virtualPalette.physicalPalette = targetPalette;
+                    targetBitmap.virtualPalette.setPPal(targetPalette);
                 }
                 if(importBitmap) {
                     targetBitmap.data = pixelData;

@@ -18,7 +18,7 @@ export class PalPage {
             <b>Palette ID:</b> ${palette.id}<br>
             <b><abbr title="virtual palettes that use this palette">Used by</abbr>:</b><br>`;
 
-        const usage = this.sty.getPaletteUsage(palette);
+        const usage = palette.getUsageGroupedIDs();
         for (const [baseName, ids] of Object.entries(usage)) {
             infoHTML += `${baseName}/: ${Helper.arrayToRanges(ids)}<br>`;
         }

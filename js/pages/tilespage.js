@@ -32,7 +32,7 @@ export class TilesPage {
             let paletteID = Helper.loopValue(0, this.sty.data.palettes.length - 1, e.target.value);
             let palette = this.sty.data.palettes[paletteID];
             if(!palette) return;
-            tile.bitmap.virtualPalette.physicalPalette = palette;
+            tile.bitmap.virtualPalette.setPPal(palette);
             this.renderer.renderBitmap(this.elements.seltilecanv, tile.bitmap);
         }
 

@@ -3,6 +3,7 @@ export class OMPalette {
         this.pageID = pageID;
         this.relID = relID;
         this.id = pageID*64 + relID;
+        this.usedBy = [];
 
         this.setData(bgraData);
     }
@@ -26,5 +27,27 @@ export class OMPalette {
             data.push(rgbaColor[2], rgbaColor[1], rgbaColor[0], 255 - rgbaColor[3]);
         }
         return data;
+    }
+
+    addUsage(vpal) {
+        if(!this.usedBy.includes(vpal)) {
+            this.usedBy.push(vpal);
+        }
+    }
+
+    removeUsage(vpal) {
+        this.usedBy.splice(this.usedBy.indexOf(vpal), 1);
+    }
+
+    getUsageGroupedIDs() {
+        let grouped = {};
+
+        for(let i = 0; i < this.usedBy.length; i++) {
+            let vPal = this.usedBy[i];
+            if(!grouped[vPal.baseName]) grouped[vPal.baseName] = [];
+            grouped[vPal.baseName].push(vPal.relID);
+        }
+
+        return grouped;
     }
 }
